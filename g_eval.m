@@ -40,4 +40,3 @@ elseif type == 2
     g_val = (1/(2*pi)) * beta;
 end
     
-    

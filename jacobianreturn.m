@@ -1,4 +1,3 @@
-
 % Shooting problem 
 function J = jacobianreturn(x,y,z,vx,vy,vz)
 kpc2km = 30856775814671900;

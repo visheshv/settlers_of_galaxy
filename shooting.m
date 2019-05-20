@@ -53,4 +53,3 @@ plot3(states(:,1),states(:,2),states(:,3))
 
 
 % Update the guess using the B matrix
-

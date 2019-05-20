@@ -1,7 +1,7 @@
 function xdot=dynamics(t,X)
 
 kpc2km = 30856775814671900;
-myr = 1e6*365*86400;
+myr = myr = 1e6*31557600;;
 
 k0 = 0.00287729;
 k1 =  0.0023821 ;

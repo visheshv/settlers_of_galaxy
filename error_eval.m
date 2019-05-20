@@ -18,4 +18,3 @@ for i=1:length(X_k)
     g = g_eval(X_k(i), type);
     err = err + (f/g-1)^2;
 end
-
