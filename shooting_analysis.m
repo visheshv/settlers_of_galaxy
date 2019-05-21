@@ -15,7 +15,7 @@ load star_snapshots
 x0 = [x(1,1) y(1,1) z(1,1) vx(1,1) vy(1,1) vz(1,1)]';  % Sol position at t0
 r0 = x0(1:3);
 
-store_results =zeros(180,13);
+store_results =zeros(180,16);
 tic
 
 for i=2:181
@@ -65,7 +65,8 @@ end
 
 end
 
-store_results(i-1,:) = [x_t(1:3)' ic(1,4:6) states(end, 4:6) x_t(4:6)'  tof]; % target position, 
+% target position, intial velocity, final velocity, target velocity and tof
+store_results(i-1,:) = [x_t(1:6)' ic(1,4:6) states(end, 4:6) x_t(4:6)'  tof]; 
 
 end
 
@@ -75,8 +76,8 @@ toc-tic
 
 tf=0.5:0.5:90;
 delr= vecnorm((store_results(:,1:3)-repmat(x0(1:3)',180,1))')';
-delv_transfer= vecnorm((store_results(:,4:6)-store_results(:,7:9))')';
-delv_rendezvous= vecnorm((store_results(:,7:9)-store_results(:,10:12))')';
+delv_transfer= vecnorm((store_results(:,7:9)-store_results(:,4:6))')';
+delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
 delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end)];
 
 figure(1)
