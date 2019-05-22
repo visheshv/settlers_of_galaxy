@@ -121,7 +121,7 @@ xlabel('tof (myr)');ylabel('dv rendezvous (km/s)')
 %% histogram
 min_data = zeros(180,4);
 for j = 1:1:180
-
+x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';
 sol_time_transfer = (j-1) * 0.5;  
 delr= vecnorm((store_results(:,1:3,j)-x0(1:3,1,1)')')';
 delv_transfer= vecnorm((store_results(:,10:12,j)-x0(4:6,1,1)')')'*kpc2km/myr;
