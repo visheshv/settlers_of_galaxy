@@ -12,7 +12,7 @@ myr = 1e6*31557600;
 % Outputs
 % analysis of dV vs tof. starting from Sol, find and transfer to the closest
 % star at each snap
-store_results =zeros(180,19,181);
+store_results =zeros(180,19,180);
 
 tic
 for j = 1:1:180
@@ -21,10 +21,9 @@ disp(['Starting time from Sol : ',num2str((j-1) * 0.5)]);
 % Initialize sol state
 x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';  % Sol position at t0
 r0 = x0(1:3);
-
-for i=j+1:181
 temp_store_results =zeros(180,19);
-    
+
+for i=j+1:181    
     
 tof= (i-1) * 0.5;  % Myr
 
@@ -84,21 +83,23 @@ toc-tic
 
 save shooting_analysis_variable_Time
 
-%{
 %% Results
+%{
+start_id = 2;
+x0 = [x(1,start_id) y(1,start_id) z(1,start_id) vx(1,start_id) vy(1,start_id) vz(1,start_id)]';
 
-tf=0.5:0.5:90;
-delr= vecnorm((store_results(:,1:3)-x0(1:3,1)')')';
-delv_transfer= vecnorm((store_results(:,10:12)-x0(4:6,1)')')'*kpc2km/myr;
-delv_rendezvous= vecnorm((store_results(:,4:6)-store_results(:,16:18))')'*kpc2km/myr;
-delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end)];
+tf=[0:0.5:90]';
+delr= vecnorm((store_results(:,1:3,start_id)-x0(1:3,1,1)')')';
+delv_transfer= vecnorm((store_results(:,10:12,start_id)-x0(4:6,1,1)')')'*kpc2km/myr;
+delv_rendezvous= vecnorm((store_results(:,4:6,start_id)-store_results(:,16:18,start_id))')'*kpc2km/myr;
+delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end,start_id)];
 
 figure(1)
 plot(delr,delv_transfer,'o')
 hold on
 plot(delr,delv_rendezvous,'*')
 legend('delv_{transfer} (km/s)','delv_{rendezvous} (km/s)')
-xlabel(' |rf-r0| in kpc')
+xlabel(' |rf-r0| in kpc'); ylabel('delv [km/s]')
 grid on;
 
 figure(2)
@@ -111,17 +112,22 @@ figure(3)
 plot(delv_r_store(:,end), delr)
 xlabel('tof (myr)');ylabel('Position of the closest star (kpc)')
 
+%{
 figure(4)
 plot(tf,delv_rendezvous)
 xlabel('tof (myr)');ylabel('dv rendezvous (km/s)')
-
-
-
-% Propagate STM over the X(t) and find STM(tf), calculate B (3 x 3) matrix
-
-
-
-
-
-% Update the guess using the B matrix
 %}
+%}
+%% histogram
+min_data = zeros(180,4);
+for j = 1:1:180
+
+sol_time_transfer = (j-1) * 0.5;  
+delr= vecnorm((store_results(:,1:3,j)-x0(1:3,1,1)')')';
+delv_transfer= vecnorm((store_results(:,10:12,j)-x0(4:6,1,1)')')'*kpc2km/myr;
+delv_rendezvous= vecnorm((store_results(:,4:6,j)-store_results(:,16:18,j))')'*kpc2km/myr;
+%delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end,j)];
+
+min_data(j,:) = [sol_time_transfer, min(abs(delr)), min(abs(delv_transfer)), min(abs(delv_rendezvous))];
+
+end
