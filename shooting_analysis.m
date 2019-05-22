@@ -15,7 +15,8 @@ myr = 1e6*31557600;
 store_results =zeros(180,19,181);
 
 tic
-parfor j = 1:1:181
+for j = 1:1:180
+disp(['Starting time from Sol : ',num2str((j-1) * 0.5)]);
 
 % Initialize sol state
 x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';  % Sol position at t0
@@ -25,7 +26,7 @@ for i=j+1:181
 temp_store_results =zeros(180,19);
     
     
-tof= (i-1) * 0.5  % Myr
+tof= (i-1) * 0.5;  % Myr
 
 % Sol-less data
 star_positions_target=[x(2:100001,i),y(2:100001,i),z(2:100001,i)]; % Except sun, all position values for stars at t=tof
@@ -43,7 +44,7 @@ stm0(1,29)=1;
 stm0(1,36)=1;
 
 % Propagate dynamics and find X(tf)
-tspan = 0:0.1:tof;
+tspan = (j-1)*0.5:0.1:tof;
 del_xf=[1;0;0];
 ic = horzcat(x0',stm0);
 
@@ -72,7 +73,7 @@ end
 
 % target position, intial velocity, final velocity, target velocity and tof
 %store_results(i-1,:) = [x_t(1:6)' ic(1,4:6) states(end, 4:6) x_t(4:6)'  tof]; 
-temp_store_results(i-1,:) = [x_t(1:6)' ic(1,4:6) states(end, 4:6) x_t(4:6)'  tof]; 
+temp_store_results(i-1,:) = [x_t(1:6)' ic(1,1:6) states(end, 1:6) tof]; 
 end
 
 store_results(:,:,j) = temp_store_results;
@@ -80,6 +81,8 @@ end
 
 toc;
 toc-tic
+
+save shooting_analysis_variable_Time
 
 %{
 %% Results
