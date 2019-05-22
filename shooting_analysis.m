@@ -1,4 +1,4 @@
-% Analysis of shooting method
+%Analysis of shooting method
 % Shooting problem
 
 clc
@@ -123,9 +123,9 @@ min_data = zeros(180,4);
 for j = 1:1:180
 x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';
 sol_time_transfer = (j-1) * 0.5;  
-delr= vecnorm((store_results(:,1:3,j)-x0(1:3,1,1)')')';
-delv_transfer= vecnorm((store_results(:,10:12,j)-x0(4:6,1,1)')')'*kpc2km/myr;
-delv_rendezvous= vecnorm((store_results(:,4:6,j)-store_results(:,16:18,j))')'*kpc2km/myr;
+delr= vecnorm((store_results(j:end,1:3,j)-x0(1:3,1,1)')')';
+delv_transfer= vecnorm((store_results(j:end,10:12,j)-x0(4:6,1,1)')')'*kpc2km/myr;
+delv_rendezvous= vecnorm((store_results(j:end,4:6,j)-store_results(j:end,16:18,j))')'*kpc2km/myr;
 %delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end,j)];
 
 min_data(j,:) = [sol_time_transfer, min(abs(delr)), min(abs(delv_transfer)), min(abs(delv_rendezvous))];
