@@ -1,6 +1,5 @@
 %Analysis of shooting method
 % Shooting problem
-
 clc
 clear;
 close all
@@ -23,7 +22,7 @@ x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';  % Sol position at t0
 r0 = x0(1:3);
 temp_store_results =zeros(180,19);
 
-for i=j+1:181    
+parfor i=j+1:181    
     
 tof= (i-1) * 0.5;  % Myr
 
@@ -118,16 +117,32 @@ plot(tf,delv_rendezvous)
 xlabel('tof (myr)');ylabel('dv rendezvous (km/s)')
 %}
 %}
-%% histogram
-min_data = zeros(180,4);
+%% min points map
+min_data = zeros(180,5);
 for j = 1:1:180
 x0 = [x(1,j) y(1,j) z(1,j) vx(1,j) vy(1,j) vz(1,j)]';
-sol_time_transfer = (j-1) * 0.5;  
+sol_time_transfer = (j-1) * 0.5; 
+ttime = store_results(j:end,end,j);
 delr= vecnorm((store_results(j:end,1:3,j)-x0(1:3,1,1)')')';
 delv_transfer= vecnorm((store_results(j:end,10:12,j)-x0(4:6,1,1)')')'*kpc2km/myr;
 delv_rendezvous= vecnorm((store_results(j:end,4:6,j)-store_results(j:end,16:18,j))')'*kpc2km/myr;
 %delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end,j)];
 
-min_data(j,:) = [sol_time_transfer, min(abs(delr)), min(abs(delv_transfer)), min(abs(delv_rendezvous))];
+[val_delv,ind_delv] = min(abs(delv_transfer));
+val_delr = delr(ind_delv);
+val_delvr = delv_rendezvous(ind_delv);
+
+t_delv = ttime(ind_delv);
+
+min_data(j,:) = [sol_time_transfer, val_delr, val_delv, val_delvr, t_delv];
 
 end
+
+
+figure(5);
+yyaxis left;
+plot(min_data(:,1),min_data(:,3),'.'); grid on; hold on;
+ylabel('min dv transfer (km/s)');
+yyaxis right;
+plot(min_data(:,1),min_data(:,5),'r.'); grid on; hold on;
+xlabel('start time from sol (myr)');ylabel('time of transfer (myr)')
