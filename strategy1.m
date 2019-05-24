@@ -13,14 +13,29 @@ close all
 %% Load data
 load star_snapshots 
 load star_data
+ 
+global star_data  R_vec phi_vec omega_vec i_vec theta_f 
+global v_vec n_vec
 
-star_data = data; % Load the star IDs into this variable
-star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000 stars to be potentially covered
-
+%Constants
 kpc2km = 30856775814671900;
 myr = 1e6*31557600;
 kms2kpcpmyr = myr/kpc2km;
 kpcpmyr2kms = kpc2km / myr;
+dtr = pi/180;
+
+% Update star database variables
+R_vec = data(:,2); % kpc (kiloparsecs) 
+phi_vec = data(:,5); % phi (deg)
+omega_vec = data(:,4); % omega (deg)
+i_vec = data(:,3); % i (deg)
+theta_f= data(:,6); % final polar angle (deg)
+k = [0.00287729 0.0023821 -0.0010625 0.000198502 -1.88428e-05 9.70521e-07 -2.70559e-08 3.7516e-10 -1.94316e-12];
+v_vec = kms2kpcpmyr*([R_vec.^0 R_vec.^1 R_vec.^2 R_vec.^3 R_vec.^4 R_vec.^5 R_vec.^6 R_vec.^7 R_vec.^8]*k').^-1; % Star speeds kpc/Myr
+n_vec = (1/dtr)*(v_vec ./ R_vec); % (deg/mYR)
+
+star_data = data; % Load the star IDs into this variable
+star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000 stars to be potentially covered
 
 fileID = fopen('strategy1.txt','w');
 fprintf(fileID,'%s\n','strategy1');
@@ -31,65 +46,86 @@ fprintf(fileID,'%s\n','strategy1');
 
 %% Mother ship capture of near star with minimum transfer deltaV
 % Initialize sol state
-t_departure=2.5; %myr
-i_departure=t_departure/0.5+1;
+
+t_departure=2.5;                    %myr according to CB's analysis for min deltaV
+i_departure=t_departure/0.5+1;      %column number query
+t_arrival= 5;                       %myr
+i=t_arrival/0.5+1;                  %column index corresponding to t = 6myr
+tof= t_arrival-t_departure;                 %myr
 x0 = [x(1,i_departure) y(1,i_departure) z(1,i_departure) vx(1,i_departure) vy(1,i_departure) vz(1,i_departure)]';  % Sol position at t0
 r0 = x0(1:3);
 v0_guess = x0(4:6); % Guess initial condition for solver
 
+num_impulses_ms=0;
+sum_impulses_ms=0;
 store_results =zeros(1,16);
+delv_store=[];
+state_store=[];
 tic
 
 constraints_met=0; % check whether delta V constraints are met after finding a solution
 
-tof= 6-t_departure;  % Myr
-i=6/0.15+1;    % column index corresponding to t = 6myr
-
-% Sol-less data
-star_positions_target=[x(2:end,i),y(2:end,i),z(2:end,i)]; % Except sun, all position values for stars at t=tof
-star_velocities_target=[vx(2:end,i),vy(2:end,i),vz(2:end,i)]; % Except sun, all position values for stars at t=tof
-
-idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0);
-x_t = [x(idx+1,i) y(idx+1,i) z(idx+1,i) vx(idx+1,i) vy(idx+1,i) vz(idx+1,i)]'; % Target states
-delv_store=[];
-state_store=[];
-
 while constraints_met==0
+    
+    % Sol-less data
+    star_positions_target=[x(2:end,i),y(2:end,i),z(2:end,i)]; % Except sun, all position values for stars at t=tof
+    star_velocities_target=[vx(2:end,i),vy(2:end,i),vz(2:end,i)]; % Except sun, all position values for stars at t=tof
+    
+    idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0);
+    x_t = [x(idx+1,i) y(idx+1,i) z(idx+1,i) vx(idx+1,i) vy(idx+1,i) vz(idx+1,i)]'; % Target states
+    
+    vt = x_t(4:6);
+    rt = x_t(1:3);
+    
+    star_ID(1,1) = idx; % 1st settlement from Mothership
+    
+    [states,v0,vf]= shooting_solver(r0,rt,tof,v0_guess);
+    
+    store_results = [x_t(1:6)' states(1,4:6) states(end, 4:6) x_t(4:6)'  tof];
+    
+    delv_transfer= norm(v0-v0_guess');
+    delv1= v0-v0_guess';
+    delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
+    delv2= (-store_results(:,10:12)+store_results(:,13:15)); % rendezvous delv
+    
+    if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
+        disp(['no solution at tof (myr):' num2str(tof)])
+        tof =tof+0.5;
+        t_arrival= t_departure+tof;                 %myr
+        i=t_arrival/0.5+1;                          %column index corresponding to t = 6myr
+    else
+        
+        % Update mothership impulses
+        num_impulses_ms=num_impulses_ms+1;
+        sum_impulses_ms=sum_impulses_ms+delv_transfer;
+        
+        if num_impulses_ms>3 || sum_impulses_ms * kpcpmyr2kms > 500 % Dont use more than three impulses or more than 500 kmps dV
+            % Generation 0 mothership star captures and update the star
+            % settled data base
+            star_database_ms = find_solution_intercepts_ms(t_departure,r0,v0_guess,idx_prev);
+            break 
+        end
+        
+        delv_store = [delv_store; delv1 delv_transfer delv2 delv_rendezvous];
+        state_store = [state_store; states];
+        
+        % Update mothership states
+        t_departure=t_arrival;                    %myr according to CB's analysis for min deltaV
+        i_departure=t_departure/0.5+1;            %column number query
+        t_arrival= t_departure+tof;                 %myr
+        i=t_arrival/0.5+1;                        % column index corresponding to t = 6myr
+        tof= t_arrival-t_departure;               %myr
+        x0 = x_t;
+        r0 =  x_t(1:3);
+        v0_guess = x_t(4:6); % Guess initial condition for solver
+        idx_prev = idx;
+           
+    end
 
-vt = x_t(4:6);
-rt = x_t(1:3);
-
-star_ID(1,1) = idx; % 1st settlement from Mothership
-
-[states,v0,vf]= shooting_solver(r0,rt,tof,v0_guess);
-
-store_results = [x_t(1:6)' states(1,4:6) states(end, 4:6) x_t(4:6)'  tof]; 
-
-delv_transfer= norm(v0-v0_guess');
-delv1= v0-v0_guess';
-delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
-delv2= (-store_results(:,10:12)+store_results(:,13:15)); % rendezvous delv
-
-if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300 % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
-    stm0 = zeros(1,36); stm0(1,1)=1; stm0(1,8)=1; stm0(1,15)=1; stm0(1,22)=1; stm0(1,29)=1; stm0(1,36)=1;
-    v0_restricted = 200* kms2kpcpmyr *v0/norm(v0) + v0_guess';
-    tspan = 0:0.1:tof*(1/6); 
-    ic = [r0' v0_restricted stm0];
-    [~,states]=ode45(@dynamics,tspan,ic);
-    v0_guess = states(end,4:6)';
-    r0 = states(end,1:3)';
-    tof = tof*(5/6);
-    delv1 = v0_restricted - x0(4:6)';
-    delv_store = [delv_store; delv1 norm(delv1) delv2 norm(delv2)];
-    state_store = [state_store; states];
-else 
-    constraints_met=1;
-    delv_store = [delv_store; delv1 norm(delv1) delv2 norm(delv2)];
-    state_store = [state_store; states];
 end
 
-end
-
+toc;
+toc-tic
 % Mothership line
 settlement_tree_ms(1,:)=[-1, 0, 1, 1, 2.5, delv_store(end,1:3) * kpcpmyr2kms];
 fprintf(fileID,'%d\t%d\t%d\t%d\t%6.5f\t%6.5f\t%6.5f\t%6.5f\t\n',settlement_tree_ms);
