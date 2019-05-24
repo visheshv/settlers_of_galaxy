@@ -1,4 +1,4 @@
-% Shooting problem
+% Shooting problem example
 
 % Inputs
 % r0

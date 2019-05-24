@@ -79,6 +79,12 @@ delr= vecnorm((store_results(:,1:3)-repmat(x0(1:3)',180,1))')';
 delv_transfer= vecnorm((store_results(:,7:9)-store_results(:,4:6))')';
 delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
 delv_r_store = [delr delv_transfer delv_rendezvous store_results(:,end)];
+v_sol_0= repmat(x0(4:6)',180,1);
+
+for j=1:180
+a(j)=dot(v_sol_0(j,:), store_results(j,7:9));
+end
+
 
 figure(1)
 plot(delr,delv_transfer,'o')
@@ -89,9 +95,6 @@ xlabel(' |rf-r0| in kpc')
 
 
 figure(2)
-plot(delv_transfer,delv_r_store(:,end))
-xlabel('delv_{transfer} (kpc/myr)')
-ylabel('tof (myr)')
 
 figure(3)
 plot(tf, delr)

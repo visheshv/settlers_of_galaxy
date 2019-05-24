@@ -71,6 +71,7 @@ ylabel(' N / (1 + N x 1e-4 x (E_r + E_{theta}))')
 
 
 % Analysis on submission delay
+
 tspan = 23; % days;
 tdue  = 23:-1:0;
 B = 1+ (1/tspan)^4 * tdue .^4;
