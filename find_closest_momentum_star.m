@@ -1,4 +1,4 @@
-function idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0)
+function idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,n)
 
 % Identify 10 closest stars
 r0 =  x0(1:3);
@@ -12,9 +12,11 @@ rel_pos= rel_pos./normvec;
 v_n= repmat(v0'/norm(v0),length(idx),1);
 
 angles = acosd(dot(rel_pos,v_n,2));
-[~,i_angle]=min(angles);
+% [~,i_angle]=min(angles);
+[~,i_angles]=sort(angles);
 
-idx=idx(i_angle);
+idx=idx(i_angles);
+idx=idx(1:n);
 
 % stm0 = zeros(1,36); stm0(1,1)=1; stm0(1,8)=1; stm0(1,15)=1; stm0(1,22)=1; stm0(1,29)=1; stm0(1,36)=1;
 % ic = horzcat(x0',stm0)';
