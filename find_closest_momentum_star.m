@@ -1,4 +1,10 @@
-function idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,n)
+function idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,n,star_ID)
+
+star_id_settled = star_ID(star_ID~=0); % IDs for settled stars
+
+if length(star_id_settled)~=0
+star_positions_target(star_id_settled,1:3)= repmat([inf inf inf],length(star_id_settled),1);
+end
 
 % Identify 10 closest stars
 r0 =  x0(1:3);

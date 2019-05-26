@@ -72,7 +72,7 @@ while constraints_met==0
     star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
     star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
     
-    idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,1);
+    idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,1,star_ID);
     x_t = [x(idx+1,i_arrival) y(idx+1,i_arrival) z(idx+1,i_arrival) vx(idx+1,i_arrival) vy(idx+1,i_arrival) vz(idx+1,i_arrival)]'; % Target states
     
     vt = x_t(4:6);
@@ -142,9 +142,9 @@ toc;
 toc-tic
 % Mothership line
 settlement_tree_ms(1,:)=[-1, 0, 3, 3, delv_store(:,end-1)', reshape(delv_store(:,1:3)',1,[]) * kpcpmyr2kms];
-fprintf(fileID,[repmat('%6.0f\t', 1,4) repmat(' %6.12f\t ', 1, 12) '\n'],settlement_tree_ms);
+fprintf(fileID,[repmat('%0.0f,',1,4) repmat('%0.12f,',1,12)],settlement_tree_ms);
 % Settlement Pod line
-fprintf(fileID,[repmat(' %6.0f\t ', 1, 3) repmat(' %6.12f\t ', 1, 4) '\n'],settlement_tree_sp');
+fprintf(fileID,['\n' repmat('%0.0f,',1, 3) repmat('%0.12f,',1,4)],settlement_tree_sp');
 
 %% Greedy strategy for settlement
 % For departure time of 8 (6+2) myr, identify the three closest stars
