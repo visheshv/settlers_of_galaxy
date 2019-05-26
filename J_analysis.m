@@ -54,7 +54,7 @@ err_r = error_eval(R_k,x_vec,s_r,1);
 x_vec = theta_f_vec * pi/180;
 err_theta = error_eval(Theta_k,x_vec,s_theta,2);
 
-err_store(count) = err_r+0*err_theta;
+err_store(count) = err_r+err_theta;
 error_J_term(count) = i / (1 + 1e-4 * i * err_store(count));
 
 end

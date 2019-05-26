@@ -16,6 +16,7 @@ load star_data
  
 global star_data  R_vec phi_vec omega_vec i_vec theta_f 
 global v_vec n_vec
+global J_merit delV_max delV_used
 
 %Constants
 kpc2km = 30856775814671900;
@@ -95,6 +96,8 @@ while constraints_met==0
     else
         
         % Successful transfer
+        delV_used = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % km/s
+        delV_max = delV_max + 300; % km/s 
         
         % Update mothership impulses
         num_impulses_ms=num_impulses_ms+1;
@@ -103,11 +106,14 @@ while constraints_met==0
         if num_impulses_ms>3 || sum_impulses_ms * kpcpmyr2kms > 500 % Dont use more than three impulses or more than 500 kmps dV
             % Generation 0 mothership star captures and update the star
             % settled data base
-%             star_database_ms = find_solution_intercepts_ms(t_departure,r0,v0_guess,idx_prev);
-            break 
+            %             star_database_ms = find_solution_intercepts_ms(t_departure,r0,v0_guess,idx_prev);
+            break
+        elseif num_impulses_ms==1
+            delV_max = delV_max + 500; % Add the mothership dv_limits (km/s)
         end
         
         star_ID(1,num_impulses_ms) = idx; % 1st settlement from Mothership
+        
         
         delv_store = [delv_store; delv1 delv_transfer delv2 delv_rendezvous t_departure t_arrival];
         state_store = [state_store; states];
@@ -138,6 +144,8 @@ while constraints_met==0
     end
 
 end
+
+
 
 toc;
 toc-tic
