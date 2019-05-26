@@ -31,7 +31,8 @@ while norm(del_xf) > 10^-10
     while_count=while_count+1;
     
     % norm(del_xf)
-    [~,states]=ode45(@dynamics,tspan,ic);
+    opts = odeset('AbsTol',1e-5);
+    [~,states]=ode45(@dynamics,tspan,ic,opts);
     
     del_xf = -[states(end,1)-rt(1);states(end,2)-rt(2);states(end,3)-rt(3)];
     stm_f = [states(end,7:12);states(end,13:18);states(end,19:24);states(end,25:30);states(31:36);states(end,37:42)];

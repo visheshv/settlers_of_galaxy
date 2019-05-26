@@ -38,9 +38,20 @@ for i=1:size(v_vec,1)
         vx(i,counter)= v_vec(i)*(-sind(n_vec(i)*t+phi_vec(i))*cosd(omega_vec(i)) - cosd(n_vec(i)*t+phi_vec(i))*cosd(i_vec(i))*sind(omega_vec(i)));
         vy(i,counter)= v_vec(i)*(-sind(n_vec(i)*t+phi_vec(i))*sind(omega_vec(i)) + cosd(n_vec(i)*t+phi_vec(i))*cosd(i_vec(i))*cosd(omega_vec(i)));
         vz(i,counter)= v_vec(i)*(cosd(n_vec(i)*t+phi_vec(i))*sind(i_vec(i)));
+        
     end
+       
+end
+
+
+for t=0:0.5:90
+    counter=t/0.5+1;
+    figure(1)
+    plot(x(:,counter),y(:,counter),'.')
+    pause(0)
     
 end
+    
 
 i_temp = find((R_vec(:,1)< (R_vec(1)+0.01)) & (R_vec(:,1)> (R_vec(1)-0.01)) & z );
 x0 = [x(1);y(1);z(1);vx(1);vy(1);vz(1)];  % Sol position at t0

@@ -6,6 +6,8 @@ if length(star_id_settled)~=0
 star_positions_target(star_id_settled,1:3)= repmat([inf inf inf],length(star_id_settled),1);
 end
 
+
+
 % Identify 10 closest stars
 r0 =  x0(1:3);
 v0= x0(4:6);
