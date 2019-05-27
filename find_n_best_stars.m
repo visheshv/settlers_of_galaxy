@@ -1,4 +1,14 @@
-function idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,n,star_ID)
+function idx = find_n_best_stars(star_positions_target,star_velocities_target,x0,n,star_ID, t_min_departure)
+
+% Input
+% starID: current settled Star IDs, 
+% t: minimum departure
+% n:n target stars
+
+% Output
+% t_min_departure
+% tof
+% Target IDs for the 'n' best stars 
 
 global J_merit
 

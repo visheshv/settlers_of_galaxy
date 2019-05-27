@@ -17,6 +17,7 @@ load star_data
 global star_data  R_vec phi_vec omega_vec i_vec theta_f 
 global v_vec n_vec
 global J_merit delV_max delV_used
+global R_min R_max
 
 %Constants
 kpc2km = 30856775814671900;
@@ -24,6 +25,8 @@ myr = 1e6*31557600;
 kms2kpcpmyr = myr/kpc2km;
 kpcpmyr2kms = kpc2km / myr;
 dtr = pi/180;
+R_min = 2;
+R_max = 32;
 
 % Update star database variables
 R_vec = data(:,2); % kpc (kiloparsecs) 
@@ -63,6 +66,14 @@ store_results =zeros(1,16);
 delv_store=[];
 state_store=[];
 settlement_tree_sp=[];
+
+J_merit =0;
+delV_max = 0;
+delV_used = 0;
+J_merit_temp =0;
+delV_max_temp =0;
+delV_used_temp =0;
+
 tic
 
 constraints_met=0; % check whether delta V constraints are met after finding a solution
@@ -88,11 +99,23 @@ while constraints_met==0
     delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
     delv2= (-store_results(:,10:12)+store_results(:,13:15)); % rendezvous delv
     
-    if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
+    % Check  whether it is worth selecting the star with respect to the
+    % merit function increase
+    delV_max_temp = delV_max + 300; % Add the mothership dv_limits (km/s)
+    delV_used_temp = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % Add the mothership dv_limits (km/s)
+    star_ID_temp = [star_ID(star_ID~=0) ; idx];
+    error_J_term_temp = J_N_r_theta(star_ID_temp,star_data);
+    J_merit_temp = error_J_term_temp * delV_max_temp / delV_used_temp;
+    
+    if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300 || J_merit_temp -J_merit <0  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
         disp(['no solution at tof (myr):' num2str(tof)])
         tof =tof+0.5;
         t_arrival= t_departure+tof;                 %myr
         i_arrival=t_arrival/0.5+1;                          %column index corresponding to t = 6myr
+        
+        if t_arrival>89.5
+            break
+        end
     else
         
         % Successful transfer
@@ -109,11 +132,17 @@ while constraints_met==0
             %             star_database_ms = find_solution_intercepts_ms(t_departure,r0,v0_guess,idx_prev);
             break
         elseif num_impulses_ms==1
+            % Update settled star ids
+            star_ID(1,num_impulses_ms) = idx; % 1st settlement from Mothership
             delV_max = delV_max + 500; % Add the mothership dv_limits (km/s)
+            error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
+            J_merit = error_J_term * delV_max / delV_used;
+        else
+            % Update settled star ids
+            star_ID(1,num_impulses_ms) = idx; % 1st settlement from Mothership
+            error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
+            J_merit = error_J_term * delV_max / delV_used;
         end
-        
-        star_ID(1,num_impulses_ms) = idx; % 1st settlement from Mothership
-        
         
         delv_store = [delv_store; delv1 delv_transfer delv2 delv_rendezvous t_departure t_arrival];
         state_store = [state_store; states];
@@ -150,7 +179,7 @@ end
 toc;
 toc-tic
 % Mothership line
-settlement_tree_ms(1,:)=[-1, 0, 3, 3, delv_store(:,end-1)', reshape(delv_store(:,1:3)',1,[]) * kpcpmyr2kms];
+settlement_tree_ms(1,:)=[-1, 0, length(star_ID(star_ID~=0)), length(star_ID(star_ID~=0)), delv_store(:,end-1)', reshape(delv_store(:,1:3)',1,[]) * kpcpmyr2kms];
 fprintf(fileID,[repmat('%0.0f,',1,4) repmat('%0.12f,',1,12)],settlement_tree_ms);
 % Settlement Pod line
 fprintf(fileID,['\n' repmat('%0.0f,',1, 3) repmat('%0.12f,',1,4)],settlement_tree_sp');
@@ -162,7 +191,7 @@ fprintf(fileID,['\n' repmat('%0.0f,',1, 3) repmat('%0.12f,',1,4)],settlement_tre
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
 
-while(gen<6)
+while(gen<11)
 
 % remove the stars that are already occupied for generating the search
 % space
@@ -193,8 +222,8 @@ for  j =1 : length(stars_gen_k)
     
     if gen==1
         
-        t_departure=settlement_tree_sp(j,4)+2; % 2 yr
-        t_arrival= t_departure+tof;                 %myr
+        t_departure=settlement_tree_sp(j,4)+2;    % 2 yr
+        t_arrival= t_departure+tof;               % myr
         i_arrival = t_arrival/0.5 +1;             % position history column corresponding to the arrival time
         i_departure = t_departure/0.5+1;          % position history column corresponding to the departure time
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
@@ -205,8 +234,12 @@ for  j =1 : length(stars_gen_k)
         t_arrival= t_departure+tof;                 %myr
         i_arrival = t_arrival/0.5 +1;             % position history column corresponding to the arrival time
         i_departure = t_departure/0.5+1;          % position history column corresponding to the departure time
-        star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
         
+        if t_arrival>89.5
+            break
+        end
+        
+        star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof           
     end
     
     
@@ -225,6 +258,11 @@ for  j =1 : length(stars_gen_k)
                 
         constraints_met =0;
         num_constraint_violation =0;
+        
+        J_merit_temp =0;
+        delV_max_temp =0;
+        delV_used_temp =0;
+        
         while constraints_met == 0
             idx = idx_vec(l);
             x_t = [x(idx+1,i_arrival_temp) y(idx+1,i_arrival_temp) z(idx+1,i_arrival_temp) vx(idx+1,i_arrival_temp) vy(idx+1,i_arrival_temp) vz(idx+1,i_arrival_temp)]'; % Target states
@@ -244,8 +282,17 @@ for  j =1 : length(stars_gen_k)
             dv2= -vf+vt';      % rendezvous impulse
             delv_rendezvous = norm(dv2);
             
-            if norm(dv1) * kpcpmyr2kms > 175 || norm(dv2) * kpcpmyr2kms > 175 % no solution
-                disp(['no solution at tof (myr):' num2str(tof)])
+            % Check  whether it is worth selecting the star with respect to the
+            % merit function increase
+            delV_max_temp = delV_max + 400; % Add the mothership dv_limits (km/s)
+            delV_used_temp = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % Add the mothership dv_limits (km/s)
+            star_ID_temp = [star_ID(star_ID~=0) ; idx];
+            error_J_term_temp = J_N_r_theta(star_ID_temp,star_data);
+            J_merit_temp = error_J_term_temp * delV_max_temp / delV_used_temp;
+            
+            
+            if norm(dv1) * kpcpmyr2kms > 175 || norm(dv2) * kpcpmyr2kms > 175 || J_merit_temp -J_merit <0 % no solution
+%                 disp(['no solution at tof (myr):' num2str(tof)])
                 tof =tof+0.5;
                 t_arrival_temp= t_arrival_temp+0.5;                 %myr
                 i_arrival_temp=t_arrival_temp/0.5+1;                          %column index corresponding to t = 6myr
@@ -256,6 +303,12 @@ for  j =1 : length(stars_gen_k)
                 end
                 
             else
+                
+                % Successful transfer
+                delV_used = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % km/s
+                delV_max = delV_max + 400; % km/s
+                error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
+                J_merit = error_J_term * delV_max / delV_used;
                 
                 star_ID(gen+1,(j-1)*3+l)=star_data(idx+1,1);
                 % Settlement Pod line

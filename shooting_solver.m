@@ -43,8 +43,11 @@ while norm(del_xf) > 10^-10
 %     plot3(states(:,1),states(:,2),states(:,3))
 %     hold on   
     
-if while_count>30
+if while_count>25
+    states(1,4:6)=[inf inf inf];
+    states(end,4:6)=[inf inf inf];
     tof=inf;
+    break
 end
 
 end
