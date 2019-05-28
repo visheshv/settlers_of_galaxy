@@ -1,9 +1,5 @@
-% Implement a simple strategy to populate stars only with one mothership
+% Implement a simple strategy to populate stars only with three motherships
 
-% 1. Find closest star of MS for a 0.5 mn tof for which the rendezvous deltaV < 300 km/s
-% 2. do loop
-%     For each settled star, go forward 2 mn yrs and find three closest stars for each Settler ship, such that initial deltaV transfer is <175 kmps and rendezvous deltaV is <175 kmps
-%     while t<90 myr
 % 3. Find the settlement tree
 
 clc
@@ -211,25 +207,25 @@ while(gen<8)
         if gen==1
             
             if j<=(length(stars_gen_k)-2)
-                t_departure_min=settlement_tree_sp(j,4)+2;    % 2 yr for settling a star system
+                t_min_departure=settlement_tree_sp(j,4)+2;    % 2 yr for settling a star system
             else
-                t_departure_min=settlement_tree_fs(j+2-length(stars_gen_k),4)+2;    % 2 yr for settling a star system
+                t_min_departure=settlement_tree_fs(j+2-length(stars_gen_k),4)+2;    % 2 yr for settling a star system
             end
             
         else
             
             indx_current_star = find(settlement_tree_ss(:,2) == ID_jk);
-            t_departure_min=settlement_tree_ss(indx_current_star,5)+2; % 2 yr for settling a star system
+            t_min_departure=settlement_tree_ss(indx_current_star,5)+2; % 2 yr for settling a star system
             
         end
         
-        if t_departure_min>=89.5 % Dont execute below this line for the loop if this condition comes
+        if t_min_departure>=89.5 % Dont execute below this line for the loop if this condition comes
                 continue 
         end
                 
-        x0=[x(ID_jk+1,t_departure_min/0.5+1),y(ID_jk+1,t_departure_min/0.5+1),z(ID_jk+1,t_departure_min/0.5+1),vx(ID_jk+1,t_departure_min/0.5+1),vy(ID_jk+1,t_departure_min/0.5+1),vz(ID_jk+1,t_departure_min/0.5+1)]';
+        x0=[x(ID_jk+1,t_min_departure/0.5+1),y(ID_jk+1,t_min_departure/0.5+1),z(ID_jk+1,t_min_departure/0.5+1),vx(ID_jk+1,t_min_departure/0.5+1),vy(ID_jk+1,t_min_departure/0.5+1),vz(ID_jk+1,t_min_departure/0.5+1)]';
         
-        [idx_vec, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,3,star_ID, t_departure_min,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
+        [idx_vec, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,3,star_ID, t_min_departure,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
         
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
         star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
