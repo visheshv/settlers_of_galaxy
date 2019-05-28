@@ -6,11 +6,14 @@ clc
 clear all
 close all
 
+%% 
+load strat2data
+%{
 % Load data
 load star_snapshots
 load star_data
 load J_store
-
+ 
 global star_data  R_vec phi_vec omega_vec i_vec theta_f
 global v_vec n_vec
 global J_merit delV_max delV_used
@@ -46,7 +49,7 @@ delV_max = 0;
 delV_used = 0;
 J_store=unique(J_store,'rows');
 J_store=sortrows(J_store,6,'descend');
-star_ID(1,10:11) = [J_store(1,1) J_store(2,1)]; % Solutions available from J_store
+star_ID(1,10:11) = [J_store(1,1) J_store(3,1)]; % Solutions available from J_store
 % idx_ms=[9;16;24]; % rows 9,16,24 represent best compromise between max merit value and min time of arrival so that the settling pods have enough time to breed
 idx_ms=[283;319;207]; % rows 283,319,207 represent min time of arrival so that the settling pods have enough time to breed
 fileID = fopen('strategy2.txt','w');
@@ -88,13 +91,14 @@ for mothership_id=-1:-1:-3
         if num_impulses_ms==0
             idx = J_store(idx_ms(-mothership_id),1);  % Targets queried from good Sol transfers from J_store
             is_bad_solution =0;
-        else
-            [idx, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,1,star_ID, t_min_departure,1,inf,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data); % Mothership position propagated 1.5 myr since the previous star interception
+        else            
+            [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_n_best_stars(x0,1,star_ID, t_min_departure,1,inf,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data); % Mothership position propagated 1.5 myr since the previous star interception
+            r0=x0_departure(1:3);v0_guess= x0_departure(4:6);
         end
 
         x_t = [x(idx+1,i_arrival) y(idx+1,i_arrival) z(idx+1,i_arrival) vx(idx+1,i_arrival) vy(idx+1,i_arrival) vz(idx+1,i_arrival)]'; % Target states
         rt = x_t(1:3);vt = x_t(4:6);
-
+        
         tof=t_arrival-t_departure;
 
         [states,v0,vf]= shooting_solver(r0,rt,tof,v0_guess); % Run the algorithm
@@ -171,11 +175,14 @@ toc;
 toc-tic
 %% Fastship
 % Fastship line
+
 settlement_tree_fs(1:2,:)=[-11,76457,8,61,9.82419017275941,-12.2229794464399,-0.758833716987316,-7.05705080167052,12.9841046519746,-0.931972851585255;
-                           -12,45078,4,54.5000000000000,12.2216484308859,-8.67292111974953,1.16938984963069,-8.83079622405303,8.81443650509784,-1.20819512866258];
+                           -12,46609,2.5,57,-1.51043054136710,-8.21772704567083,5.21514694136725,-0.366263344844732,12.7921582425029,-11.5937056669336];  % row 1 and row3 of initial solution
 fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
 
-% load strat2data
+
+save strat2data
+%}
 
 %% Greedy strategy for settlement
 % For departure time of 8 (6+2) myr, identify the three closest stars
@@ -184,7 +191,7 @@ fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
 
-while(gen<8)
+while(gen<13)
     
     % remove the stars that are already occupied for generating the search
     % space
@@ -225,7 +232,7 @@ while(gen<8)
                 
         x0=[x(ID_jk+1,t_min_departure/0.5+1),y(ID_jk+1,t_min_departure/0.5+1),z(ID_jk+1,t_min_departure/0.5+1),vx(ID_jk+1,t_min_departure/0.5+1),vy(ID_jk+1,t_min_departure/0.5+1),vz(ID_jk+1,t_min_departure/0.5+1)]';
         
-        [idx_vec, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,3,star_ID, t_min_departure,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
+        [idx_vec, t_departure,t_arrival,is_bad_solution, ~] = find_n_best_stars(x0,3,star_ID, t_min_departure,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
         
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
         star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof

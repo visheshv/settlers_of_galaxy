@@ -1,10 +1,11 @@
-function [idx, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,n,star_ID, t_min_departure,query_type,current_star_ID,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data)
+function [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_n_best_stars(x0,n,star_ID, t_min_departure,query_type,current_star_ID,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data)
 
 % Input
 % starID: current settled Star IDs,
 % t: minimum departure
 % n: number of target stars
 % query_type: 1 for mothership, 2 for settler ship
+
 % current_star_ID: find the ID for the current star to be departed ( !only for settler ships! )
 
 % Output
@@ -12,6 +13,7 @@ function [idx, t_departure,t_arrival,is_bad_solution] = find_n_best_stars(x0,n,s
 % tof
 % Target IDs for the 'n' best stars
 % is_bad_solution: equals 0 if legitimately good solution found
+% x0 state at updated departure conditions
 
 
 kpc2km = 30856775814671900;
@@ -25,7 +27,7 @@ angle_thresh_anomaly=10; % deg
 r_thresh=5; % kpc
 
 max_check=200;
-J_query_store=zeros(max_check,4); % t_dep
+J_query_store=zeros(max_check,10); % t_dep
 stm0 = zeros(1,36); stm0(1,1)=1; stm0(1,8)=1; stm0(1,15)=1; stm0(1,22)=1; stm0(1,29)=1; stm0(1,36)=1; % STM0 for all propagation requirements
 
 for i_counter=1:max_check
@@ -53,16 +55,18 @@ for i_counter=1:max_check
             [~,states]=ode45(@dynamics,tspan,ic,opts);
             r0 = states(end,1:3)';                     %state
             v0=  states(end,4:6)';
+            x0_departure = [r0;v0];
         else
             r0=x0(1:3);
             v0=x0(4:6);
+            x0_departure = [r0;v0];
         end
         
     elseif query_type ==2
         
         r0= [x(current_star_ID+1,i_departure),y(current_star_ID+1,i_departure),z(current_star_ID+1,i_departure)]';
         v0= [vx(current_star_ID+1,i_departure),vy(current_star_ID+1,i_departure),vz(current_star_ID+1,i_departure)]';
-        
+        x0_departure = [r0;v0];
     end
     
     %% Find stars to target
@@ -134,9 +138,9 @@ for i_counter=1:max_check
     J_merit_temp = error_J_term_temp * delV_max_temp / delV_used_temp;
     
     if J_merit_temp >= J_merit && delV_used_temp < delV_max_temp && violation_dv==0
-        J_query_store(i_counter,:) = [i_temp, t_departure,t_arrival, J_merit_temp];
+        J_query_store(i_counter,:) = [i_temp, t_departure,t_arrival, J_merit_temp, x0_departure'];
     else
-        J_query_store(i_counter,:) = [i_temp, t_departure,t_arrival, -inf];
+        J_query_store(i_counter,:) = [i_temp, t_departure,t_arrival, -inf, x0_departure'];
     end
     
 end
@@ -147,6 +151,9 @@ J_query_store=sortrows(J_query_store,4,'descend');
 idx= J_query_store(1:n,1);
 t_departure= J_query_store(1:n,2);
 t_arrival= J_query_store(1:n,3);
+x0_departure= J_query_store(1:n,5:10)';
+
 is_bad_solution=sum(J_query_store(1:n,4)<0); % equals 0 if good solution found
+
 
 end
