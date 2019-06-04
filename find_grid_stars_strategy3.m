@@ -1,4 +1,4 @@
-function [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_grid_stars(x0,n,star_ID, t_min_departure,query_type,current_star_ID,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data,star_target_grids)
+function [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_grid_stars_strategy3(x0,n,star_ID, t_min_departure,query_type,current_star_ID,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data,star_target_grids)
 
 % Input
 % starID: current settled Star IDs,
@@ -16,15 +16,8 @@ function [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_grid_s
 % is_bad_solution: equals 0 if legitimately good solution found
 % x0 state at updated departure conditions
 
-kpc2km = 30856775814671900;
+kpc2km = 30856775814671900; 
 myr = 1e6*31557600;
-kpcpmyr2kms = kpc2km / myr;
-
-angle_thresh_plane=5; % deg
-angle_thresh_anomaly=10; % deg
-r_thresh=5; % kpc
-
-star_id_targets = star_target_grids - ones(size(star_target_grids,1),size(star_target_grids,2));
 
 % For selecting tof, tof polynomial function versus r (kpc)
 poly_n=[1.64965819444119e-08,-1.70149835795047e-06,6.54110993481119e-05,-0.00110272848583409,0.00589360129400973,0.0467622383963570,-0.668482140993974,3.15728858911639,-2.33996016100402];
@@ -166,7 +159,7 @@ cond4 = length(star_id_settled) - length(setdiff(star_id_settled,id_4-1));
 cond5 = length(star_id_settled) - length(setdiff(star_id_settled,id_5-1));
 cond6 = length(star_id_settled) - length(setdiff(star_id_settled,id_6-1));
 
-decision_matrix=[ 0 0 0 0 3 2 1;
+decision_matrix=[ 0 0 0 0 2 3 1;
                   0 0 0 1 3 2 1;
                   1 0 0 0 3 2 4;
                   0 1 0 0 3 4 1;
