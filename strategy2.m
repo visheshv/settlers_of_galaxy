@@ -7,12 +7,13 @@ clear all
 close all
 
 %% 
-load strat2data
-%{
+% load strat2data
+%%{
 % Load data
 load star_snapshots
 load star_data
 load J_store
+load star_target_grids
  
 global star_data  R_vec phi_vec omega_vec i_vec theta_f
 global v_vec n_vec
@@ -92,7 +93,7 @@ for mothership_id=-1:-1:-3
             idx = J_store(idx_ms(-mothership_id),1);  % Targets queried from good Sol transfers from J_store
             is_bad_solution =0;
         else            
-            [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_n_best_stars(x0,1,star_ID, t_min_departure,1,inf,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data); % Mothership position propagated 1.5 myr since the previous star interception
+            [idx, t_departure,t_arrival,is_bad_solution,x0_departure] = find_n_best_stars_strategy2(x0,1,star_ID, t_min_departure,1,inf,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data); % Mothership position propagated 1.5 myr since the previous star interception
             r0=x0_departure(1:3);v0_guess= x0_departure(4:6);
         end
 
@@ -232,7 +233,7 @@ while(gen<13)
                 
         x0=[x(ID_jk+1,t_min_departure/0.5+1),y(ID_jk+1,t_min_departure/0.5+1),z(ID_jk+1,t_min_departure/0.5+1),vx(ID_jk+1,t_min_departure/0.5+1),vy(ID_jk+1,t_min_departure/0.5+1),vz(ID_jk+1,t_min_departure/0.5+1)]';
         
-        [idx_vec, t_departure,t_arrival,is_bad_solution, ~] = find_n_best_stars(x0,3,star_ID, t_min_departure,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
+        [idx_vec, t_departure,t_arrival,is_bad_solution, ~] = find_n_best_stars_strategy2(x0,3,star_ID, t_min_departure,2,ID_jk,J_merit,delV_max,delV_used,x,y,z,vx,vy,vz,star_data);
         
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
         star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
@@ -284,6 +285,7 @@ while(gen<13)
                 else
                     
                     % Successful transfer
+                    error_J_term_prev = error_J_term;
                     delV_used = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % km/s
                     delV_max = delV_max + 400; % km/s
                     error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
@@ -291,7 +293,7 @@ while(gen<13)
                     
                     check_star = 1-sum(star_ID(gen+1,:)==idx); % Goes to 1 if idx is a new unique star in the current generation selection
                     
-                    if check_star ==1
+                    if check_star ==1 %&& error_J_term >= error_J_term_prev
                         star_ID(gen+1,(j-1)*3+l)=idx;
                         % Settlement Pod line
                         % Write the actions in the txt solution file.
@@ -321,9 +323,11 @@ for i = 1:9
             figure(1)
             hold on
             plot3(x_t(1),x_t(2),x_t(3),'*')
+            
         end
         
     end
+    pause(1)
     
 end
 

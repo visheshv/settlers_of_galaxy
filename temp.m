@@ -93,6 +93,43 @@ err_theta= max(abs(theta_f_compute-theta_f));  % Maximum error value of ~ 1e-4
 
 % save star_snapshots x y z vx vy vz
 
+[R_new,I]=sort(R_vec);
+n_vec_new=n_vec(I);
+tof_new=(180/16)*(n_vec_new.^-1);
+figure(3)
+plot(R_new,n_vec_new); hold on;
+plot(R_new,tof_new);
+xlabel('R kpc');legend('n (deg/myr)','tof (myr)')
+
+%% find the target stars as the center of each grid points at t=0;
+r_stars = [x(:,1) y(:,1) z(:,1)];
+theta_stars = atan2(r_stars(:,2),r_stars(:,1));
+r_stars_norm = vecnorm(r_stars')';
+star_target_grids = zeros(30,32);
+
+for radius = 2:1:31 % Move up by 1000 stars to be settled
+
+    for theta = -pi: pi/16:(pi-pi/16)
+        
+        cond1=r_stars_norm>=radius;
+        cond2=r_stars_norm<(radius+1);
+        cond3=theta_stars>=theta;
+        cond4=theta_stars<(theta+pi/16);
+        
+        id = find(cond1 & cond2 & cond3 & cond4);
+        % find star closest to grid center
+        [val,id_center] = min((r_stars_norm(id,:)- (radius+0.5)).^2 + (theta_stars(id,:)- (theta+pi/32)).^2 + r_stars(id,3).^2);
+        
+        id = id(id_center);
+        star_target_grids(radius-1, round((theta+pi)*(16/pi)+1))=id;
+        
+        hold on
+        plot3(x(id,1),y(id,1),z(id,1),'*')
+        
+    end
+end
+    
+
 
 % figure(1)
 % r=(x.^2+y.^2+z.^2).^0.5;

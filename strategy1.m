@@ -18,6 +18,7 @@ global star_data  R_vec phi_vec omega_vec i_vec theta_f
 global v_vec n_vec
 global J_merit delV_max delV_used
 global R_min R_max
+global settled_star_pos
 
 %Constants
 kpc2km = 30856775814671900;
@@ -66,6 +67,7 @@ store_results =zeros(1,16);
 delv_store=[];
 state_store=[];
 settlement_tree_sp=[];
+settled_star_pos = [];
 
 J_merit =0;
 delV_max = 0;
@@ -84,7 +86,7 @@ while constraints_met==0
     star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
     star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
     
-    idx = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,1,star_ID);
+    idx = find_closest_momentum_star_strategy1(star_positions_target,star_velocities_target,x0,1,star_ID,x,y,z);
     x_t = [x(idx+1,i_arrival) y(idx+1,i_arrival) z(idx+1,i_arrival) vx(idx+1,i_arrival) vy(idx+1,i_arrival) vz(idx+1,i_arrival)]'; % Target states
     
     vt = x_t(4:6);
@@ -107,7 +109,7 @@ while constraints_met==0
     error_J_term_temp = J_N_r_theta(star_ID_temp,star_data);
     J_merit_temp = error_J_term_temp * delV_max_temp / delV_used_temp;
     
-    if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300 || J_merit_temp -J_merit <0  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
+    if delv_transfer * kpcpmyr2kms > 200 || delv_rendezvous * kpcpmyr2kms > 300  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
         disp(['no solution at tof (myr):' num2str(tof)])
         tof =tof+0.5;
         t_arrival= t_departure+tof;                 %myr
@@ -138,6 +140,9 @@ while constraints_met==0
             error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
             J_merit = error_J_term * delV_max / delV_used;
         else
+            if norm(rt)-norm(r0)<0
+               break
+            end
             % Update settled star ids
             star_ID(1,num_impulses_ms) = idx; % 1st settlement from Mothership
             error_J_term = J_N_r_theta(star_ID(star_ID~=0),star_data);
@@ -184,21 +189,35 @@ fprintf(fileID,[repmat('%0.0f,',1,4) repmat('%0.12f,',1,12)],settlement_tree_ms)
 % Settlement Pod line
 fprintf(fileID,['\n' repmat('%0.0f,',1, 3) repmat('%0.12f,',1,4)],settlement_tree_sp');
 
+%% fast ship line 
+star_ID(1,10:11) = [696 19131]; % Solutions available from J_store
+
+%!! RUN the fast_ship_transfer file for FS -11 
+settlement_tree_fs(1:2,:)=[-11,696,0,25,kpcpmyr2kms*[-0.607263816523397,-0.365907897190692,-0.0446800262498599,0.408446251323942,0.635341048639990,-0.00469600342441436];
+                           -12,19131,0,6.5,-1316.70466616146,362.474264571612,9.85548837500831,1382.67201066288,-333.627000067822,-24.4211899177846];  % row 1 and row3 of initial solution
+fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
+
+
 %% Greedy strategy for settlement
 % For departure time of 8 (6+2) myr, identify the three closest stars
 % positionally and make a Gen 1 set of settler ships
 
+tic
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
 
-while(gen<11)
+while(gen<20)
 
 % remove the stars that are already occupied for generating the search
 % space
+if gen==7
+    disp('Check for gen7 issues')    
+end
 disp(['Current gen:' num2str(gen+1)])
 
 idx_search = star_data(2:end,1);       % Complete search space for stars except sol
 star_id_settled = star_ID(star_ID~=0); % IDs for settled stars
+
 % idx_search = setdiff(idx_search,star_id_settled); % Remove settled star IDs from search space
 
 % Set of upto 3 ^ k stars at Gen k, find 3 closest star for each settled
@@ -222,21 +241,27 @@ for  j =1 : length(stars_gen_k)
     
     if gen==1
         
-        t_departure=settlement_tree_sp(j,4)+2;    % 2 yr
+        if j<=(length(stars_gen_k)-2)
+            t_departure=settlement_tree_sp(j,4)+2;    % 2 yr for settling a star system
+        else
+            t_departure=settlement_tree_fs(j+2-length(stars_gen_k),4)+2;    % 2 yr for settling a star system
+        end
+        
         t_arrival= t_departure+tof;               % myr
         i_arrival = t_arrival/0.5 +1;             % position history column corresponding to the arrival time
         i_departure = t_departure/0.5+1;          % position history column corresponding to the departure time
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
+        
     else
         
         indx_current_star = find(settlement_tree_ss(:,2) == ID_jk);
-        t_departure=settlement_tree_ss(indx_current_star,5)+2; % 2 yr
+        t_departure=settlement_tree_ss(indx_current_star(1),5)+2; % 2 yr
         t_arrival= t_departure+tof;                 %myr
         i_arrival = t_arrival/0.5 +1;             % position history column corresponding to the arrival time
         i_departure = t_departure/0.5+1;          % position history column corresponding to the departure time
         
         if t_arrival>89.5
-            break
+            continue
         end
         
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof           
@@ -247,9 +272,9 @@ for  j =1 : length(stars_gen_k)
     r0_jk = [x(idx_jk,i_departure) y(idx_jk,i_departure) z(idx_jk,i_departure)];   % Position of the star ID of the jth element of the kth gen at departure time
     v0_jk = [vx(idx_jk,i_departure) vy(idx_jk,i_departure) vz(idx_jk,i_departure)];   % Position of the star ID of the jth element of the kth gen at departure time
     x0 = [r0_jk';v0_jk'];
-    idx_vec = find_closest_momentum_star(star_positions_target,star_velocities_target,x0,3,star_ID) ; % 3 closest stars settlerships
+    idx_vec = find_closest_momentum_star_strategy1(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z) ; % 3 closest stars settlerships
         
-    for l =1:3  % Find all the closest 3 stars with respect to jth settled star of kth generation
+     for l =1:length(idx_vec)  % Find all the closest 1/2/3 stars with respect to jth settled star of kth generation
         
         t_arrival_temp=t_arrival;
         t_departure_temp=t_departure;
@@ -290,8 +315,11 @@ for  j =1 : length(stars_gen_k)
             error_J_term_temp = J_N_r_theta(star_ID_temp,star_data);
             J_merit_temp = error_J_term_temp * delV_max_temp / delV_used_temp;
             
+            if norm(rt)-norm(r0)<0
+               break
+            end
             
-            if norm(dv1) * kpcpmyr2kms > 175 || norm(dv2) * kpcpmyr2kms > 175 || J_merit_temp -J_merit <0 % no solution
+            if norm(dv1) * kpcpmyr2kms > 175 || norm(dv2) * kpcpmyr2kms > 175 % || J_merit_temp -J_merit <0 % no solution
 %                 disp(['no solution at tof (myr):' num2str(tof)])
                 tof =tof+0.5;
                 t_arrival_temp= t_arrival_temp+0.5;                 %myr
@@ -302,7 +330,7 @@ for  j =1 : length(stars_gen_k)
                     break
                 end
                 
-            else
+            else 
                 
                 % Successful transfer
                 delV_used = delV_used + delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms; % km/s
@@ -323,26 +351,37 @@ for  j =1 : length(stars_gen_k)
     end
 end
 
+toc
 % Update the departure and arrival times, generation gen
 gen = gen+1;     % next generation of settler ships to be seen
 
+% if gen>7
+% save 4jundata
+% end
+
+toc-tic
 end
 
+
+close all
 % plot star positions versus generation
 for i = 1:9
-    for j=1:3^(i-1)
+    for j=1:3^(i)
         i_f=90/0.5+1;
         if star_ID(i,j)==0
         else
-        temp = find(star_ID(i,j) == star_data(:,1)); % find the row number for the ID in the star database
-        idx_ij =  star_data(temp,1);
+%         temp = find(star_ID(i,j) == star_data(:,1)); % find the row number for the ID in the star database
+%         idx_ij =  star_data(temp,1);
+        idx_ij = star_ID(i,j)+1;
         x_t = [x(idx_ij,i_f) y(idx_ij,i_f) z(idx_ij,i_f) vx(idx_ij,i_f) vy(idx_ij,i_f) vz(idx_ij,i_f)]'; % Target states
         figure(1)
         hold on
         plot3(x_t(1),x_t(2),x_t(3),'*')
+        axis equal
+        xlim([-32 32])
+        ylim([-32 32])
         end
-        
     end
-    
+%     pause(5)    
 end
 
