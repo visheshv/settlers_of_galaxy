@@ -61,7 +61,7 @@ rt = x_t(1:3);
 
 delv_transfer= norm(v0-v0_guess');
 delv1= v0-v0_guess';
-delv_rendezvous= vecnorm((store_results(:,10:12)-store_results(:,13:15))')';
+delv_rendezvous= norm(-vf+vt');
 delv2= (-vf+vt'); % rendezvous delv
 
 
@@ -90,7 +90,7 @@ end
 
 end
 
-store=[store; idx tof (delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms) r_stars(idx)  theta_stars(idx) delv1 delv2];
+store=[store; idx tof (delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms) r_stars(idx)  theta_stars(idx) delv1*kpcpmyr2kms delv2*kpcpmyr2kms];
 
 end
 
