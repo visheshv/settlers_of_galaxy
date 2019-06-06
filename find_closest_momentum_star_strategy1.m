@@ -50,11 +50,13 @@ end
 % Find the highest frequency of them in the direction of the current velocity
 % hist=histogram(normvec);[~,i_r_min]=max(hist.Values);
 % r_min=hist.BinEdges(i_r_min);
-r_max=2;
-r_min=0.5;
+% stats for short tof transfers
+
+r_max=4;
+r_min=1.2;
 v_max=0.3;
 
-inc_thresh=2; % inclination range
+inc_thresh=3; % inclination range
 
 % plane normal
 h=cross(star_positions_target(idx,:),star_velocities_target(idx,:));
@@ -78,6 +80,8 @@ if n==1
     idx=idx(1:n);
 
 else
+
+%     [tempA,i_angles]=sort(angles);idx=idx(i_angles); idx=idx(1:n);
     
     angles_temp =  angles .* sign_data;
        
@@ -87,7 +91,7 @@ else
     [tempA,i_angles]=sort(angles_temp);
     i_1= find( (tempA> (1.1 * (180/pi))) & (tempA< (179 )));
     
-    if length(i_1)==0
+    if isempty(i_1)
         cond1=0;
     else
         cond1=1;
@@ -96,7 +100,7 @@ else
     
     i_2= find( (tempA< (-1.1 * (180/pi))) & (tempA> (-179)));
     
-    if length(i_2)==0
+    if isempty(i_2)
         cond2=0;
     else
         cond2=1;
