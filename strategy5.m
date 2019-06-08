@@ -40,28 +40,38 @@ star_data = data; % Load the star IDs into this variable
 star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000 stars to be potentially covered
 
 J_merit =0; delV_max = 0; delV_used = 0;
+				
+vv = [0	4.5	10.5	8	90.69048403	43.21579927	92.56819078	-14.07010823	102.5061461	-116.6852104	4.5	6	12	11.5	103.8787225	95.1505498	34.2155428	97.2575023	-10.31142466	79.83289202	4	3	10	11.5	122.517245	48.07071184	78.8950015	-63.91014941	-167.125416	-9.545042532	22.01246911	22.10698653	22.85988768	22.8718273	20.80202789	20.82292139	9.614456156	9.67518655	1.400275394	3.776451875	3.147779008];
+% vv = [8	12.5	5	2.5	102.2651853	86.32742812	59.02444995	-30.18290761	-87.6812428	14.66616136	3.5	9.5	3.5	8	88.34501787	70.54900637	68.25803323	123.094495	40.84586525	133.1787716	6.5	16.5	3.5	8.5	145.7880629	85.7351113	58.94973406	119.8500549	29.60969923	-84.67955047	13.24285295	13.30564259	29.11989997	29.1391028	24.37812994	24.45532798	30.23674391	30.25063133	1.892532674	3.173992754	2.601617615];
+% vv = [2.5	8.5	10	8	140.9777785	52.94412021	63.77411727	66.27458411	-35.21376532	-42.7157264	4	8	13	3.5	104.5543721	75.40978387	40.17801976	-35.14020023	43.44190099	-121.9917701	0.5	7	8	2	127.9874996	104.0802217	36.9302521	173.8206725	-124.42687	92.92047528	11.12518742	11.19055644	29.20046444	29.22451228	11.89057632	11.98626991	15.82081735	15.89720714	2.018654766	5.240598961	3.474753366];
+
+itr = '1';
+
 
 %% Solution format text file
-fileID = fopen('strategy5.txt','w'); fprintf(fileID,'%s','strategy5');
+fname = strcat('strategy5_',itr);
+fnameext = strcat(fname,'.txt');
+figname = strcat(fname, '.fig');
+fileID = fopen(fnameext,'w'); fprintf(fileID,'%s','strategy5');
 
 settlement_tree_sp=[];
 settlement_tree_ms=[];
 
 %% Control points 
 % Controls for motherships: id, t_departure (1st impulse),t1 (time period of first segment after departure burn,t2 (myr), t3 (myr), max dv1 (km/s), max dv2 (km/s), max dv3 (km/s), max angle1 (deg), max angle2 (deg), max angle3 (deg) 
-mothership_controls=[-1 9.5	12	2	10	104.3988277	107.8580452	67.62148355	8.471076175	6.193775004	154.2564809;  % towards radially south east
-                     -2 5	3.5	7.5	10	132.1688067	49.13189994	49.5982752	8.471076175	6.193775004	154.2564809;       % towards south west
-                     -3 7.5	7.5	9	5.5	92.52036369	87.91421576	70.36900531	8.471076175	6.193775004	154.2564809];    % towards northwest positions
-                 
+mothership_controls=[-1, vv(1:10);
+                     -2, vv(11:20);
+                     -3, vv(21:30)];
+
 % Control for fast ships
 % ArgIn: t_departure: departureSol(myr), r_search_min: min radius of search(kpc), r_search_max: max radius of search(kpc),theta_search: min theta of search(deg) at arrival, theta_search: max radius of search(deg) at the time of arrival
-t_departure_fs1=0; r_query_min_fs1=4.5; r_query_max_fs1=4.7; theta_query_min_fs1=-100; theta_query_max_fs1=-90;
-t_departure_fs2=0; r_query_min_fs2=9.5; r_query_max_fs2=10.3; theta_query_min_fs2=115; theta_query_max_fs2=123;
+t_departure_fs1=0; r_query_min_fs1=vv(31); r_query_max_fs1=vv(32); theta_query_min_fs1=vv(33); theta_query_max_fs1=vv(34);
+t_departure_fs2=0; r_query_min_fs2=vv(35); r_query_max_fs2=vv(36); theta_query_min_fs2=vv(37); theta_query_max_fs2=vv(38);
 
 % Control for separation from existing settled stars(distance) for settler ships 
-min_sep= 1; % kpc
-r_max= 3;   % kpc
-r_min= 1;   % kpc
+min_sep= vv(39); % kpc
+r_max= vv(40);   % kpc
+r_min= vv(41);   % kpc
 
 %% Mother ship capture of near star with minimum transfer deltaV
 for mothership_id=-1:-1:-3
@@ -424,5 +434,6 @@ for i = 1:9
     end
 %     pause(5)    
 end
+savefig(figname); 
  hold on; plot3(0,0,0,'+')
 
