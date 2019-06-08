@@ -33,9 +33,9 @@ t_depart_indx = randi(length(t_depart_range),N,1);
 clear states_log init_cond
 
 states_log = zeros(184,8,N);
-init_cond = zeros(N,15);
+init_cond = zeros(N,20);
 
-parfor ii = 1:1:N
+for ii = 1:1:N
     
     disp(['MC id: ',num2str(ii)]);    
     
@@ -130,17 +130,27 @@ parfor ii = 1:1:N
         TE3 = inf;
     end
     
-    init_cond(ii,:) = [fpa1 fpa2 fpa3 [del_v1 del_v2 del_v3]*(1/kms2kpcpmyr) t1 t2 t3 i_query event_count TE t1+TE1' (t1+t2+TE2') (t1+t2+t3+TE3')];
+    init_data = [fpa1 fpa2 fpa3 [del_v1 del_v2 del_v3]*(1/kms2kpcpmyr) t1 t2 t3 i_query event_count TE t1+TE1' (t1+t2+TE2') (t1+t2+t3+TE3')];
+    init_cond(ii,:) = [init_data , zeros(1,20-length(init_data))];
     states_log(:,:,ii) = [t_hist r_hist v_hist event_log];
     
 end
  
 save mothership_mc.mat init_cond states_log;
 
+%% failure:
+success_idx = find(init_cond(:,11) == 0);
+failure_idx = find(init_cond(:,11) ~= 0);
+
+for kk = 1:1:length(failure_idx)
+plot3(states_log(:,2,failure_idx(kk)),states_log(:,3,failure_idx(kk)),states_log(:,4,failure_idx(kk))); hold on;
+end
+
+
+hist(init_cond(success_idx,1));
+
 
 %% plot
 for kk = 1:1:N
-
 plot3(states_log(:,2,kk),states_log(:,3,kk),states_log(:,4,kk)); hold on;
-
 end

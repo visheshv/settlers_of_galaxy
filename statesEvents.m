@@ -19,7 +19,7 @@ v_star_vec = vcap*vmag;
 delv =  (v_star_vec - v)*(1/kms2kpcpmyr);
 delv_max = 300;
 
-if (delv_max < (norm(delv)) && rem(t,0.5)<1e-12) && t >= 1 % check delV for capture 1Myr after the ms ship burn and @ 0.5 Myr rate
+if ((delv_max < (norm(delv))  && t >= 1) || (rnorm<2) || (rnorm>32)) && rem(t,0.5)<1e-12 % check delV for capture 1Myr after the ms ship burn and @ 0.5 Myr rate
     value = 0 ;
 else
     value = 1;
