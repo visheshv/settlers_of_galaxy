@@ -50,7 +50,7 @@ settlement_tree_ms=[];
 %% Mother ship capture of near star with minimum transfer deltaV
 
 % Controls for motherships: id, t1 (1st impulse),t2,t3 (3rd impulse), t4 (max time), max dv1, max dv2, max dv3, max angle1, max angle2, max angle3
-frac=0.1;
+frac=0.4;
 mothership_controls=[-1, 0, 20, 30, 40, 200*frac, 180*frac, 50*frac, -90, -30, -30;  % towards radially south east
                      -2, 10, 30, 40,50, 180*frac, 180*frac, 50*frac, 0, 30, 40;      % towards south west
                      -3,  5, 25, 35, 45, 200*frac,180*frac, 90*frac, 50, 90, 120];   % towards northwest positions
@@ -85,7 +85,11 @@ for mothership_id=-1:-1:-3
         % data of star positions except Sol
         star_positions_target=[x(2:end,i_arrival),y(2:end,i_arrival),z(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
         star_velocities_target=[vx(2:end,i_arrival),vy(2:end,i_arrival),vz(2:end,i_arrival)]; % Except sun, all position values for stars at t=tof
-
+        
+        if num_impulses_ms==3
+            break
+        end
+        
         idx=find_closest_momentum_star_mothership_strategy5(x0,1,star_ID,x,y,z, mothership_id, mothership_controls, num_impulses_ms,kms2kpcpmyr,R_vec,phi_vec,omega_vec,i_vec,n_vec,v_vec,t_departure);
         
         if length(idx)>3
@@ -206,7 +210,7 @@ toc-tic;
 % Fastship line
 % CONTROL
 % ArgIn: t_departure: departureSol(myr), r_search_min: min radius of search(kpc), r_search_max: max radius of search(kpc),theta_search: min theta of search(deg) at arrival, theta_search: max radius of search(deg) at the time of arrival
-t_departure_fs1=0; r_query_min_fs1=3.5; r_query_max_fs1=3.6; theta_query_min_fs1=-30; theta_query_max_fs1=-5;
+t_departure_fs1=0; r_query_min_fs1=4.5; r_query_max_fs1=4.7; theta_query_min_fs1=-100; theta_query_max_fs1=-90;
 t_departure_fs2=0; r_query_min_fs2=9.5; r_query_max_fs2=10.3; theta_query_min_fs2=115; theta_query_max_fs2=123;
 
 [id_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1]=fast_ship_transfer_strategy5(t_departure_fs1,r_query_min_fs1,r_query_max_fs1,theta_query_min_fs1,theta_query_max_fs1,x,y,z,vx,vy,vz,i_vec(2:end));
@@ -224,10 +228,10 @@ fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree
 % For departure time of 8 (6+2) myr, identify the three closest stars
 % positionally and make a Gen 1 set of settler ships
 
-ss_solver_option=2; % Solver options: 1 for two impulse and 2 for three impulse strategy
+ss_solver_option=1; % Solver options: 1 for two impulse and 2 for three impulse strategy
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
-max_gen=13;
+max_gen=20;
 
 while(gen<max_gen)
     
@@ -395,23 +399,27 @@ while(gen<max_gen)
     toc-tic
 end
 
+save 8junrun
+
 % plot star positions versus generation
 for i = 1:9
-    for j=1:3^(i-1)
+    for j=1:length(star_ID(star_ID~=0))
         i_f=90/0.5+1;
         if star_ID(i,j)==0
         else
-            temp = find(star_ID(i,j) == star_data(:,1)); % find the row number for the ID in the star database
-            idx_ij =  star_data(temp,1);
-            x_t = [x(idx_ij,i_f) y(idx_ij,i_f) z(idx_ij,i_f) vx(idx_ij,i_f) vy(idx_ij,i_f) vz(idx_ij,i_f)]'; % Target states
-            figure(1)
-            hold on
-            plot3(x_t(1),x_t(2),x_t(3),'*')
-            
+%         temp = find(star_ID(i,j) == star_data(:,1)); % find the row number for the ID in the star database
+%         idx_ij =  star_data(temp,1);
+        idx_ij = star_ID(i,j)+1;
+        x_t = [x(idx_ij,i_f) y(idx_ij,i_f) z(idx_ij,i_f) vx(idx_ij,i_f) vy(idx_ij,i_f) vz(idx_ij,i_f)]'; % Target states
+        figure(1)
+        hold on
+        plot3(x_t(1),x_t(2),x_t(3),'*')
+        axis equal
+        xlim([-32 32])
+        ylim([-32 32])
         end
-        
     end
-    pause(1)
-    
+%     pause(5)    
 end
+ hold on; plot3(0,0,0,'+')
 
