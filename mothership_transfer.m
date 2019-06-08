@@ -29,7 +29,7 @@ inc=acosd(dot(h,repmat([0 0 -1],length(h),1),2));
 
 r_stars=(vecnorm(star_positions_target'))';
 theta_stars= atan2d(star_positions_target(:,2),star_positions_target(:,1));
-idx_fs_targets= find((r_stars>3.5) & (r_stars<3.6) & (theta_stars<180) & (theta_stars >-180) & inc<5);
+idx_fs_targets= find((r_stars>10) & (r_stars<10.3) & (theta_stars<5) & (theta_stars >3) & inc<5);
 
 
 J_merit =0; delV_max = 0; delV_used = 0; J_merit_temp =0; delV_max_temp =0; delV_used_temp =0;
@@ -64,8 +64,9 @@ delv1= v0-v0_guess';
 delv_rendezvous= norm(-vf+vt');
 delv2= (-vf+vt'); % rendezvous delv
 
+r_min=min(vecnorm((states(:,1:3))')');
 
-if (delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2kms) > 1500  % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
+if (delv_transfer * kpcpmyr2kms) >200 || (delv_rendezvous * kpcpmyr2kms) > 300 || r_min < 2 % If Mothership initial impulse exceeds  200 km/s or setlling pod impulse exceeds 300 km/s
     disp(['no solution at tof (myr):' num2str(tof)])
     tof =tof+0.5;
     t_arrival= t_departure+tof;                 %myr
@@ -85,7 +86,7 @@ else
     end
     
     % Update settled star ids
-    
+    break
 end
 
 end
@@ -94,7 +95,7 @@ store=[store; idx tof (delv_transfer * kpcpmyr2kms + delv_rendezvous * kpcpmyr2k
 
 end
 
-store=sortrows(store,2);
+% store=sortrows(store,2);
 
 
 
