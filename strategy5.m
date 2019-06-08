@@ -49,9 +49,9 @@ settlement_tree_ms=[];
 
 %% Control points 
 % Controls for motherships: id, t_departure (1st impulse),t1 (time period of first segment after departure burn,t2 (myr), t3 (myr), max dv1 (km/s), max dv2 (km/s), max dv3 (km/s), max angle1 (deg), max angle2 (deg), max angle3 (deg) 
-mothership_controls=[-1, 0, 10, 20, 30, 200, 180, 50, -90, -30, -30;  % towards radially south east
-                     -2, 5, 15, 25,35, 180, 180, 50, 0, 30, 40;       % towards south west
-                     -3,  5, 15, 35,45, 200,180, 90, 50, 90, 120];    % towards northwest positions
+mothership_controls=[-1 9.5	12	2	10	104.3988277	107.8580452	67.62148355	8.471076175	6.193775004	154.2564809;  % towards radially south east
+                     -2 5	3.5	7.5	10	132.1688067	49.13189994	49.5982752	8.471076175	6.193775004	154.2564809;       % towards south west
+                     -3 7.5	7.5	9	5.5	92.52036369	87.91421576	70.36900531	8.471076175	6.193775004	154.2564809];    % towards northwest positions
                  
 % Control for fast ships
 % ArgIn: t_departure: departureSol(myr), r_search_min: min radius of search(kpc), r_search_max: max radius of search(kpc),theta_search: min theta of search(deg) at arrival, theta_search: max radius of search(deg) at the time of arrival
@@ -291,7 +291,7 @@ while(gen<max_gen)
         
         
         % CONTROL
-        idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep) ; % 3 closest stars settlerships
+        idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep,r_max,r_min ); % 3 closest stars settlerships
         
         for l =1:length(idx_vec)  % Find transfers to selected 1/2/3 stars with respect to jth settled star of kth generation
             
