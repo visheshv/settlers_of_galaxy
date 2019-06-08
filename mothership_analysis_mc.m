@@ -1,3 +1,4 @@
+
 % Find out possible solutions for star interceptions after the mothership
 % has exhausted its last impulse
 load star_snapshots.mat
@@ -13,9 +14,9 @@ fpa1_range = (180*(-1 + 2*rand(1,N)));
 fpa2_range = (180*(-1 + 2*rand(1,N)));
 fpa3_range = (180*(-1 + 2*rand(1,N)));
 
-del_v1_range = 200 * (-1 + 2*rand(1,N)) * kms2kpcpmyr;
-del_v2_range = 200 * (-1 + 2*rand(1,N)) * kms2kpcpmyr;
-del_v3_range = 100 * (-1 + 2*rand(1,N)) * kms2kpcpmyr;
+del_v1_range = randi(200,N,1) * kms2kpcpmyr;
+del_v2_range = randi(200,N,1) * kms2kpcpmyr;
+del_v3_range = randi(100,N,1) * kms2kpcpmyr;
 
 t1_range = 1:0.5:20; 
 t1_range_indx = randi(length(t1_range),N,1);
@@ -50,8 +51,9 @@ parfor ii = 1:1:N
     t1=t1_range(t1_range_indx(ii));
     t2=t2_range(t2_range_indx(ii));
     t3=t3_range(t3_range_indx(ii));
-
-    i_query = t_depart_range(t_depart_indx(ii))/0.5 + 1;
+    
+    t_depart = t_depart_range(t_depart_indx(ii));
+    i_query = t_depart/0.5 + 1;
     
     r_mat1=[cosd(fpa1) sind(fpa1) 0; -sind(fpa1) cosd(fpa1) 0; 0 0 1];
     r_mat2=[cosd(fpa2) sind(fpa2) 0; -sind(fpa2) cosd(fpa2) 0; 0 0 1];
@@ -128,9 +130,17 @@ parfor ii = 1:1:N
         TE3 = inf;
     end
     
-    init_cond(ii,:) = [fpa1 fpa2 fpa3 del_v1 del_v2 del_v3 t1 t2 t3 i_query event_count TE t1+TE1' (t1+t2+TE2') (t1+t2+t3+TE3')];
+    init_cond(ii,:) = [fpa1 fpa2 fpa3 [del_v1 del_v2 del_v3]*(1/kms2kpcpmyr) t1 t2 t3 i_query event_count TE t1+TE1' (t1+t2+TE2') (t1+t2+t3+TE3')];
     states_log(:,:,ii) = [t_hist r_hist v_hist event_log];
     
 end
  
 save mothership_mc.mat init_cond states_log;
+
+
+%% plot
+for kk = 1:1:N
+
+plot3(states_log(:,2,kk),states_log(:,3,kk),states_log(:,4,kk)); hold on;
+
+end
