@@ -90,6 +90,7 @@ if ~isempty(store)
     delv2 = store(1,8:10);      % kpc/myr
     
 else
+    id =0; % incase there are no solutions
     disp('Could not find fast ship solutions')    
 end
 

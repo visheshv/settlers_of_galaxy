@@ -41,7 +41,7 @@ star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000
 
 J_merit =0; delV_max = 0; delV_used = 0;
 				
-vv = [0	4.5	10.5	8	90.69048403	43.21579927	92.56819078	-14.07010823	102.5061461	-116.6852104	4.5	6	12	11.5	103.8787225	95.1505498	34.2155428	97.2575023	-10.31142466	79.83289202	4	3	10	11.5	122.517245	48.07071184	78.8950015	-63.91014941	-167.125416	-9.545042532	22.01246911	22.10698653	22.85988768	22.8718273	20.80202789	20.82292139	9.614456156	9.67518655	1.400275394	3.776451875	3.147779008];
+vv = [0, 10, 10, 10, 120, 100, 50, -90, -30, -30, 5, 15, 20,30, 100, 75, 50, 0, 30, 40 5, 15, 10,10, 150, 80, 50, 50, 90, 120 4.5 4.7 -100 -90 9.5 10.3 115 123 1 3 1];
 % vv = [8	12.5	5	2.5	102.2651853	86.32742812	59.02444995	-30.18290761	-87.6812428	14.66616136	3.5	9.5	3.5	8	88.34501787	70.54900637	68.25803323	123.094495	40.84586525	133.1787716	6.5	16.5	3.5	8.5	145.7880629	85.7351113	58.94973406	119.8500549	29.60969923	-84.67955047	13.24285295	13.30564259	29.11989997	29.1391028	24.37812994	24.45532798	30.23674391	30.25063133	1.892532674	3.173992754	2.601617615];
 % vv = [2.5	8.5	10	8	140.9777785	52.94412021	63.77411727	66.27458411	-35.21376532	-42.7157264	4	8	13	3.5	104.5543721	75.40978387	40.17801976	-35.14020023	43.44190099	-121.9917701	0.5	7	8	2	127.9874996	104.0802217	36.9302521	173.8206725	-124.42687	92.92047528	11.12518742	11.19055644	29.20046444	29.22451228	11.89057632	11.98626991	15.82081735	15.89720714	2.018654766	5.240598961	3.474753366];
 
@@ -229,13 +229,20 @@ toc-tic;
 [id_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1]=fast_ship_transfer_strategy5(t_departure_fs1,r_query_min_fs1,r_query_max_fs1,theta_query_min_fs1,theta_query_max_fs1,x,y,z,vx,vy,vz,i_vec(2:end));
 [id_fs2,t_arrival_fs2,delv1_fs2,delv2_fs2]=fast_ship_transfer_strategy5(t_departure_fs2,r_query_min_fs2,r_query_max_fs2,theta_query_min_fs2,theta_query_max_fs2,x,y,z,vx,vy,vz,i_vec(2:end));
 
-settlement_tree_fs(1:2,:)=[-11,id_fs1,t_departure_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1;
-    -12,id_fs2,t_departure_fs2,t_arrival_fs2,delv1_fs2,delv2_fs2];
-
-star_ID(1,10:11) = [id_fs1 id_fs2]; % Solutions available from J_store
-
-fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
-
+if id_fs1 ~=0 & id_fs2 ~=0
+    settlement_tree_fs(1:2,:)=[-11,id_fs1,t_departure_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1;
+                               -12,id_fs2,t_departure_fs2,t_arrival_fs2,delv1_fs2,delv2_fs2];
+    star_ID(1,10:11) = [id_fs1 id_fs2]; % Solutions available from J_store
+    fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
+elseif id_fs1 ~=0 & id_fs2 ==0
+    settlement_tree_fs(1,:)=[-11,id_fs1,t_departure_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1];
+    star_ID(1,10) = id_fs1; % Solutions available from J_store
+    fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
+elseif id_fs1 ==0 & id_fs2 ~=0
+    settlement_tree_fs(1,:)=[-11,id_fs2,t_departure_fs2,t_arrival_fs2,delv1_fs2,delv2_fs2];
+    star_ID(1,10) = id_fs2; % Solutions available from J_store
+    fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
+end
 
 %% Greedy strategy for settlement
 % For departure time of 8 (6+2) myr, identify the three closest stars
