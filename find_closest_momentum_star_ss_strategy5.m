@@ -1,4 +1,4 @@
-function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,n,star_ID,x,y,z,i_vec)
+function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,n,star_ID,x,y,z,i_vec,min_sep,r_max,r_min)
 
 % Inputs
 % star_positions_target: star positions at arrival (kpc)for star ID 1 to 1e5
@@ -7,8 +7,9 @@ function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,sta
 % n: number of star targets queried
 % star_ID: matrix of occupied star IDs
 % x,y,z: position database for all stars
-% inc: inclination database for star ID 1 to 1e5
+% i_vec: inclination database for star ID 1 to 1e5
 % kms2kpcpmyr: conversion to kpc/myr
+% min_sep: minimum separation allowed for the target stars from any of the settled stars
 
 % Output
 % idx: target starID
@@ -16,8 +17,6 @@ function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,sta
 % Define initial states
 r0 =  x0(1:3);
 v0= x0(4:6);
-
-min_sep=1;% minimum separation allowed for the target stars from any of the settled stars
 
 % constants, use them to calculate dv/dr
 kpc2km = 30856775814671900; myr = 1e6*31557600;
@@ -57,9 +56,7 @@ if ~isempty(star_id_settled)
     end
 end
 
-r_max=3;
-r_min=1;
-v_max=0.3;
+v_max=0.3;    % velocity threshold
 
 inc_thresh=3; % inclination range acceptable (deg)
 

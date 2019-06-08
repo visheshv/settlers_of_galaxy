@@ -47,15 +47,23 @@ fileID = fopen('strategy5.txt','w'); fprintf(fileID,'%s','strategy5');
 settlement_tree_sp=[];
 settlement_tree_ms=[];
 
+%% Control points 
+% Controls for motherships: id, t_departure (1st impulse),t1 (time period of first segment after departure burn,t2 (myr), t3 (myr), max dv1 (km/s), max dv2 (km/s), max dv3 (km/s), max angle1 (deg), max angle2 (deg), max angle3 (deg) 
+mothership_controls=[-1, 0, 10, 20, 30, 200, 180, 50, -90, -30, -30;  % towards radially south east
+                     -2, 5, 15, 25,35, 180, 180, 50, 0, 30, 40;       % towards south west
+                     -3,  5, 15, 35,45, 200,180, 90, 50, 90, 120];    % towards northwest positions
+                 
+% Control for fast ships
+% ArgIn: t_departure: departureSol(myr), r_search_min: min radius of search(kpc), r_search_max: max radius of search(kpc),theta_search: min theta of search(deg) at arrival, theta_search: max radius of search(deg) at the time of arrival
+t_departure_fs1=0; r_query_min_fs1=4.5; r_query_max_fs1=4.7; theta_query_min_fs1=-100; theta_query_max_fs1=-90;
+t_departure_fs2=0; r_query_min_fs2=9.5; r_query_max_fs2=10.3; theta_query_min_fs2=115; theta_query_max_fs2=123;
+
+% Control for separation from existing settled stars(distance) for settler ships 
+min_sep= 1; % kpc
+r_max= 3;   % kpc
+r_min= 1;   % kpc
+
 %% Mother ship capture of near star with minimum transfer deltaV
-
-% Controls for motherships: id, t1 (1st impulse),t2,t3 (3rd impulse), t4 (max time), max dv1, max dv2, max dv3, max angle1, max angle2, max angle3
-frac=0.4;
-mothership_controls=[-1, 0, 20, 30, 40, 200*frac, 180*frac, 50*frac, -90, -30, -30;  % towards radially south east
-                     -2, 10, 30, 40,50, 180*frac, 180*frac, 50*frac, 0, 30, 40;      % towards south west
-                     -3,  5, 25, 35, 45, 200*frac,180*frac, 90*frac, 50, 90, 120];   % towards northwest positions
-
-% Initialize sol state
 for mothership_id=-1:-1:-3
     
     t_departure=mothership_controls(-mothership_id,2);     %myr
@@ -206,13 +214,8 @@ end
 toc;
 toc-tic;
 
-%% Fastship
+%% Fastship update solution file 
 % Fastship line
-% CONTROL
-% ArgIn: t_departure: departureSol(myr), r_search_min: min radius of search(kpc), r_search_max: max radius of search(kpc),theta_search: min theta of search(deg) at arrival, theta_search: max radius of search(deg) at the time of arrival
-t_departure_fs1=0; r_query_min_fs1=4.5; r_query_max_fs1=4.7; theta_query_min_fs1=-100; theta_query_max_fs1=-90;
-t_departure_fs2=0; r_query_min_fs2=9.5; r_query_max_fs2=10.3; theta_query_min_fs2=115; theta_query_max_fs2=123;
-
 [id_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1]=fast_ship_transfer_strategy5(t_departure_fs1,r_query_min_fs1,r_query_max_fs1,theta_query_min_fs1,theta_query_max_fs1,x,y,z,vx,vy,vz,i_vec(2:end));
 [id_fs2,t_arrival_fs2,delv1_fs2,delv2_fs2]=fast_ship_transfer_strategy5(t_departure_fs2,r_query_min_fs2,r_query_max_fs2,theta_query_min_fs2,theta_query_max_fs2,x,y,z,vx,vy,vz,i_vec(2:end));
 
@@ -288,7 +291,7 @@ while(gen<max_gen)
         
         
         % CONTROL
-        idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end)) ; % 3 closest stars settlerships
+        idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep) ; % 3 closest stars settlerships
         
         for l =1:length(idx_vec)  % Find transfers to selected 1/2/3 stars with respect to jth settled star of kth generation
             
