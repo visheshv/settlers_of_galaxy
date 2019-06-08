@@ -32,7 +32,7 @@ end
 % Add selection constraints based on mothership controls
 dv_allowed = mothership_controls(-mothership_id,6+num_impulses)*kms2kpcpmyr * 0.9; % Reduce by a factor of 0.9, the max dV to ensure selection
 max_angle_dv = mothership_controls(-mothership_id,9+num_impulses);
-time_allowed = mothership_controls(-mothership_id,3+num_impulses) - mothership_controls(-mothership_id,2+num_impulses);
+time_allowed = mothership_controls(-mothership_id,3+num_impulses);
 dv_vec= dv_allowed * [cosd(max_angle_dv) sind(max_angle_dv) 0; -sind(max_angle_dv) cosd(max_angle_dv) 0; 0 0 1]*v0/norm(v0);  
 theta_max= sign(max_angle_dv) * acosd(dot((dv_vec+v0)/norm(dv_vec+v0),v0/norm(v0)));% allowed maximum angle to search targets with respect to velocity
  
