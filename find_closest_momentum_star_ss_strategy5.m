@@ -45,6 +45,15 @@ v_n= repmat(v0'/norm(v0),length(idx),1);
 angles = acosd(dot(rel_pos,v_n,2));
 sign_data=angle_sign(rel_pos,v_n,repmat(r0',length(idx),1));
 
+% CHECK!
+if norm(r0) >=16  % i.e. r is between 15 and 20 kpc
+    
+    r_min = 5;
+    r_max = r_min + 7;
+    min_sep=3;
+    
+end
+
 if ~isempty(star_id_settled)
     for j=1:length(idx)
         r_j = [x(idx(j)+1,181),y(idx(j)+1,181),z(idx(j)+1,181)];
@@ -56,30 +65,31 @@ if ~isempty(star_id_settled)
     end
 end
 
-v_max=0.3;    % velocity threshold
+v_max=0.5;    % velocity threshold
 
 inc_thresh=3; % inclination range acceptable (deg)
 
 % plane normal
 inc=180-i_vec(idx);
 
-angles(normvec<r_min)=repmat(179, sum(normvec<r_min),1 ); % remove the very close stars from contention by making the angle values to be 179
-angles(normvec>r_max)=repmat(179, sum(normvec>r_max),1 ); % remove the very close stars from contention by making the angle values to be 179
-angles(normvel>v_max)=repmat(179, sum(normvel>v_max),1 ); % remove the very close stars from contention by making the angle values to be 179
-angles(inc>inc_thresh)=repmat(179, sum(inc>inc_thresh),1);% remove the very close stars from contention by making the angle values to be 179
+angles(normvec<r_min)=179;
+angles(normvec>r_max)=179;
+angles(normvel>v_max)=179;
+angles(inc>inc_thresh)=179;
 
 angles_temp =  angles .* sign_data;
 
 % find the angle such that min separation between target stars is as
 % per the grid size at the radius band
 
-separation_angle= atand((norm(r0) * pi/16)/ r_min) ; % grid size
+% separation_angle= atand((norm(r0) * pi/16)/ r_min) ; % grid size %% could be also written as  (norm(r0) * pi/16)/ r_min for better calculation
+separation_angle= (180/pi)*((norm(r0) * pi/32)/ r_min) ; % grid size %% could be also written as  (norm(r0) * pi/16)/ r_min for better calculation
 
 % theta_dvdr=atand(dvdr);
 % theta_star=max([theta_dvdr,separation_angle]);
 
-% Choose first star to be close to -90 deg from the velocity vector
-[~,ind_min]=min(abs(angles_temp+(90+separation_angle*0.5)));
+% Choose first star to be close to -5 deg from the velocity vector
+[~,ind_min]=min(abs(angles_temp+5));
 idx1=idx(ind_min);
 
 [tempA,i_angles]=sort(angles_temp);
@@ -88,7 +98,7 @@ idx1=idx(ind_min);
 % and find the other two angles such that they maximize the separation
 % between the three angles and ensure they are atleast separated by a
 % threshold angle. If not, skip 3 star selection and go for either 1/2
-
+    
 if separation_angle <= 45
     
     i_1= find((tempA> -45) & (tempA< 0));  
@@ -112,7 +122,7 @@ if separation_angle <= 45
         idx=idx1;
     end
     
-elseif separation_angle > 45 && separation_angle <90
+elseif separation_angle > 45 && separation_angle <=90
     
     i_1= find((tempA> -90-separation_angle) & (tempA< -90+separation_angle));  
     
@@ -138,6 +148,8 @@ disp(['Impossible separation angle for SS(deg):' num2str(separation_angle)])
 end
 
 end
+
+
 
 % Check:
 % plot3(settled_star_pos_temp(:,1),settled_star_pos_temp(:,2),settled_star_pos_temp(:,3),'o');
