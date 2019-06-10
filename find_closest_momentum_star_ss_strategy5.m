@@ -1,4 +1,4 @@
-function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,n,star_ID,x,y,z,i_vec,min_sep,r_max,r_min)
+function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,n,star_ID,x,y,z,i_vec,min_sep,r_max,r_min,min_search_angle)
 
 % Inputs
 % star_positions_target: star positions at arrival (kpc)for star ID 1 to 1e5
@@ -9,7 +9,8 @@ function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,sta
 % x,y,z: position database for all stars
 % i_vec: inclination database for star ID 1 to 1e5
 % kms2kpcpmyr: conversion to kpc/myr
-% min_sep: minimum separation allowed for the target stars from any of the settled stars
+% min_sep: minimum separation distance allowed for the target stars from any of the settled stars (kpc)
+% min_search_angle: angle away from the velocity vector to search nearby stars (deg)
 
 % Output
 % idx: target starID
@@ -89,7 +90,7 @@ angles_temp =  angles .* sign_data;
 % theta_star=max([theta_dvdr,separation_angle]);
 
 % Choose first star to be close to -5 deg from the velocity vector
-[~,ind_min]=min(abs(angles_temp+5));
+[~,ind_min]=min(abs(angles_temp-min_search_angle));
 idx1=idx(ind_min);
 idx=idx1;
 
