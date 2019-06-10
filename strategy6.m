@@ -75,7 +75,7 @@ t_departure_fs2=0; r_query_min_fs2=vv(35); r_query_max_fs2=vv(36); theta_query_m
 min_sep= vv(39); % kpc
 r_max= vv(40);   % kpc
 r_min= vv(41);   % kpc
-min_search_angle= v(42); % deg
+min_search_angle= vv(42); % deg
 
 
 %% Mother ship capture of near star with minimum transfer deltaV
