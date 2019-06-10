@@ -1,5 +1,5 @@
 function [t_burn,deltav,exit_flag] = optimal_shooter_hop_ss_strategy5(star_x0,xt,tof)
-
+tic
 % Input 
 % star_x0 = initial state of the star as a colmn vector
 % xt = final state of the target star as a column vector
@@ -15,7 +15,7 @@ function [t_burn,deltav,exit_flag] = optimal_shooter_hop_ss_strategy5(star_x0,xt
 % xt = [0.325086955798508; -9.28756499339524; 1.99155694398751; -0.243539204775551; 0.00664123591508843; 0.0707247308801087];
 
 A = []; B = []; Aeq = []; Beq = []; 
-options = optimoptions('fmincon','algorithm','sqp','Display','none','MaxFunctionEvaluations',100000,'MaxIterations',2000);
+options = optimoptions('fmincon','algorithm','sqp','Display','iter','MaxFunctionEvaluations',100000,'MaxIterations',2000);
 
 %% Now the transfer has to be accomplished with 3 deltaVs and total constant time, broken into 3 steps
 
@@ -42,12 +42,12 @@ tspan2 = linspace(0,X_multiple_hop(14),100);
 [~,states2]=ode45(@state_dynamics,tspan2,X_multiple_hop(7:12,1),opts);
 
 % Calculate dV vectors for departure, intermediate and arrival deltaVs
-dep = (X_multiple_hop(4:6) - star_x0(4:6));
-inter =  (-states1(end,4:6)'+X_multiple_hop(10:12));
-arr = (-states2(end,4:6)' + xt(4:6));
+dep = norm((X_multiple_hop(4:6) - star_x0(4:6)));
+inter =  norm((-states1(end,4:6)'+X_multiple_hop(10:12)));
+arr = norm((-states2(end,4:6)' + xt(4:6)));
 
 t_burn = [0,tof/2,tof];
 deltav = [dep',inter',arr'];  % dv1, dv2, dv3
-
+toc
 end
 

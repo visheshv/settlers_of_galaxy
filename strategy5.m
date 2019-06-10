@@ -46,7 +46,7 @@ J_merit =0; delV_max = 0; delV_used = 0;
 
 % iter_count=iter_count+1;
 % vv=permutation_data(iter_count,:);
-vv = [0	10	5	5	120.000000000	100.000000000	50.000000000	-90.000000000	-30.000000000	-30.000000000	5.0	10.0	5.0	5.0	100.000000000	75.000000000	50.000000000	0.000000000	30.000000000	40.000000000	5.000000000	10.000000000	5.000000000	5.000000000	150.000000000	80.000000000	50.000000000	50.000000000	90.000000000	120.000000000	9.500000000	9.900000000	80.000000000	90.000000000	9.500000000	10.300000000	115.000000000	123.000000000	1.000000000	3.000000000	1.000000000];
+vv = [0	5	5	5	120.000000000	100.000000000	100.000000000	-90.000000000	-70.000000000	30.000000000	0	10.0	5.0	5.0	100.000000000	75.000000000	50.000000000	0.000000000	30.000000000	40.000000000	0.000000000	5.000000000	5.000000000	5.000000000	150.000000000	80.000000000	50.000000000	50.000000000	90.000000000	120.000000000	15.500000000	17.500000000	50.000000000	60.000000000	15.500000000	17.500000000	40.000000000	50.000000000	1.000000000	4.000000000	1.000000000];
 % vv = [8	12.5	5	2.5	102.2651853	86.32742812	59.02444995	-30.18290761	-87.6812428	14.66616136	3.5	9.5	3.5	8	88.34501787	70.54900637	68.25803323	123.094495	40.84586525	133.1787716	6.5	16.5	3.5	8.5	145.7880629	85.7351113	58.94973406	119.8500549	29.60969923	-84.67955047	13.24285295	13.30564259	29.11989997	29.1391028	24.37812994	24.45532798	30.23674391	30.25063133	1.892532674	3.173992754	2.601617615];
 % vv = [2.5	8.5	10	8	140.9777785	52.94412021	63.77411727	66.27458411	-35.21376532	-42.7157264	4	8	13	3.5	104.5543721	75.40978387	40.17801976	-35.14020023	43.44190099	-121.9917701	0.5	7	8	2	127.9874996	104.0802217	36.9302521	173.8206725	-124.42687	92.92047528	11.12518742	11.19055644	29.20046444	29.22451228	11.89057632	11.98626991	15.82081735	15.89720714	2.018654766	5.240598961	3.474753366];
 
@@ -229,6 +229,9 @@ end
 toc;
 toc-tic;
 
+% ! ADD to CHECK ONLY FAST SHIP EXPANSION
+star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000 stars to be potentially covered
+
 %% Fastship update solution file 
 % Fastship line
 [id_fs1,t_arrival_fs1,delv1_fs1,delv2_fs1]=fast_ship_transfer_strategy5(t_departure_fs1,r_query_min_fs1,r_query_max_fs1,theta_query_min_fs1,theta_query_max_fs1,x,y,z,vx,vy,vz,i_vec(2:end));
@@ -312,10 +315,7 @@ while(gen<max_gen)
         x0 = [r0_jk';v0_jk'];
         
         
-        % CONTROL
-        idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep,r_max,r_min ); % 3 closest stars settlerships
-        
-        for l =1:length(idx_vec)  % Find transfers to selected 1/2/3 stars with respect to jth settled star of kth generation
+        for l =1:3  % Find transfers to selected 1/2/3 stars with respect to jth settled star of kth generation
             
             t_arrival_temp=t_arrival;                           % Initial arrival time
             t_departure_temp=t_departure;
@@ -327,7 +327,10 @@ while(gen<max_gen)
             
             while constraints_met == 0                          % Loop to find min tof, dV optimum transfer
                 
-                idx = idx_vec(l);
+                % CONTROL
+                star_positions_target=[x(2:end,i_arrival_temp),y(2:end,i_arrival_temp),z(2:end,i_arrival_temp)]; % Except sun, all position values for stars at t=tof
+                idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep,r_max,r_min ); % 3 closest stars settlerships
+                idx = idx_vec;
                 x_t = [x(idx+1,i_arrival_temp) y(idx+1,i_arrival_temp) z(idx+1,i_arrival_temp) vx(idx+1,i_arrival_temp) vy(idx+1,i_arrival_temp) vz(idx+1,i_arrival_temp)]'; % Target states
                 
                 tof = t_arrival_temp-t_departure_temp;
@@ -425,7 +428,7 @@ while(gen<max_gen)
 end
 
 % save 8junrun
-if J_merit>100
+if J_merit>200
     disp(['Iter_count, J_merit: ' num2str(iter_count) ',' num2str(J_merit)])
 end
 
@@ -443,6 +446,7 @@ for i = 1:9
         figure(1)
         hold on
         plot3(x_t(1),x_t(2),x_t(3),'*')
+%         text(x_t(1),x_t(2),x_t(3),num2str(idx_ij))
         axis equal
         xlim([-32 32])
         ylim([-32 32])

@@ -16,7 +16,8 @@ opts = odeset('AbsTol',1e-5);
 tspan2 = linspace(0,x0(14),100);
 [~,states2]=ode45(@state_dynamics,tspan2,x0(7:12,1),opts);
 
-cost = norm(x0(4:6) - star_x0(4:6)) + norm(states1(end,4:6)'-x0(10:12))  + norm(states2(end,4:6)' - xt(4:6));
+%cost = norm(x0(4:6) - star_x0(4:6)) + norm(states1(end,4:6)'-x0(10:12))  + norm(states2(end,4:6)' - xt(4:6));
+cost = x0(13)+x0(14);
 dep = norm(x0(4:6) - star_x0(4:6));
 inter1 =  norm(states1(end,4:6)'-x0(10:12));
 arr = norm(states2(end,4:6)' - xt(4:6));
