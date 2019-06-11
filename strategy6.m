@@ -5,7 +5,7 @@
 % Three motherships are made to evolve at various angles to cover max path. One mothership can leave at 10 myr to cover maximum polar angle of around 220 deg.
 % Fast ship goes towards the inertial north east  (r~15-20) as fast as possible.
 
-% clc
+clc
 % clearvars -except iter_count
 clear all
 close all
@@ -13,6 +13,8 @@ close all
 %% Load data
 load star_snapshots
 load star_data
+load star_target_database_inc_10
+
 
 %% globals
 global star_data  R_vec phi_vec omega_vec i_vec theta_f
@@ -46,7 +48,7 @@ star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000
 J_merit =0; delV_max = 0; delV_used = 0;
 
 %% Enter test input vector
-vv = [0.00000	10.00000	5.00000	5.00000	120.00000	100.00000	50.00000	-90.00000	-30.00000	-30.00000	5.00000	10.00000	5.00000	5.00000	100.00000	75.00000	50.00000	0.00000	30.00000	40.00000	5.00000	10.00000	5.00000	5.00000	150.00000	80.00000	50.00000	50.00000	90.00000	120.00000	9.50000	9.90000	80.00000	90.00000	9.50000	10.30000	115.00000	123.00000	1.00000	3.00000	1.00000 -5.00000];
+vv = [0.00000	10.00000	5.00000	5.00000	120.00000	100.00000	50.00000	-90.00000	-30.00000	-30.00000	5.00000	10.00000	5.00000	5.00000	100.00000	75.00000	50.00000	0.00000	30.00000	40.00000	5.00000	10.00000	5.00000	5.00000	150.00000	80.00000	50.00000	50.00000	90.00000	120.00000	12.50000	14.50000	60.00000	70.00000	12.50000	15.0000	115.00000	123.00000	1.00000	3.00000	1.00000	-5.00000];
 
 itr = '1';
 
@@ -75,7 +77,7 @@ t_departure_fs2=0; r_query_min_fs2=vv(35); r_query_max_fs2=vv(36); theta_query_m
 min_sep= vv(39); % kpc
 r_max= vv(40);   % kpc
 r_min= vv(41);   % kpc
-min_search_angle= v(42); % deg
+min_search_angle= vv(42); % deg
 
 
 %% Mother ship capture of near star with minimum transfer deltaV
@@ -325,6 +327,7 @@ while(gen<max_gen)
             
             tof_fit=polyval(poly_n,norm(r0_jk));% guess tof in myr as a multiple of 0.5 myr
             tof_fit=tof_fit-mod(tof_fit,0.5);
+%             tof_fit=2.5;
             t_arrival=t_departure+tof_fit;                      % tof fit
             t_arrival_temp=t_arrival;                           % Initial arrival time
             t_departure_temp=t_departure;
@@ -333,20 +336,24 @@ while(gen<max_gen)
             
             ss_solver_option_loop=ss_solver_option;
             
+            if t_arrival_temp > 89
+                continue
+            end
+                        
             constraints_met =0;
             num_constraint_violation =0;
-            
-            if i_arrival_temp >181                          % Added this condition since tof_fit may give large values which can be corrected by the fmincon solver solution and break occurs only inside while loop
-                i_arrival_temp=181;
-            end
-            
+                        
             while constraints_met == 0                          % Loop to find min tof, dV optimum transfer
                 
+%                 star_positions_target=[x(2:end,i_arrival_temp),y(2:end,i_arrival_temp),z(2:end,i_arrival_temp)]; % Except sun, all position values for stars at t=tof
+                idx_vec = find_closest_momentum_star_ss_strategy6(x0,1,star_ID,x,y,z,i_vec,min_sep,r_max,r_min,min_search_angle,star_database(star_database~=0),t_arrival_temp); % 3 closest stars settlerships
                 
+                % Update grid center star states
+%                 idx_vec = find_closest_grid_star_strategy6(x0,1,star_ID,x,y,z,t_arrival_temp,star_database(star_database~=0),R_vec); % 3 closest stars settlerships
                 
-                star_positions_target=[x(2:end,i_arrival_temp),y(2:end,i_arrival_temp),z(2:end,i_arrival_temp)]; % Except sun, all position values for stars at t=tof
-                
-                idx_vec = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,3,star_ID,x,y,z,i_vec(2:end),min_sep,r_max,r_min ,min_search_angle); % 3 closest stars settlerships
+                if isempty(idx_vec)                             % No good unoccupied stars seen 
+                    break
+                end
                 
                 idx = idx_vec;
                 x_t = [x(idx+1,i_arrival_temp) y(idx+1,i_arrival_temp) z(idx+1,i_arrival_temp) vx(idx+1,i_arrival_temp) vy(idx+1,i_arrival_temp) vz(idx+1,i_arrival_temp)]'; % Target states
@@ -378,23 +385,36 @@ while(gen<max_gen)
                     % Generate guess solution from the two point shooter
                     [~,v0,vf]= shooting_solver(r0,rt,tof,v0_guess);   %% TO BE UPDATED WITH THE MODIFIED INIT COND FOR FMINCON SOLVER
                     x0_star_guess=[r0;v0']; % Guess a good solution
+
+%                     dv1= v0-v0_guess'; % transfer impulse
+%                     delv_transfer = norm(dv1);
+%                     dv2= -vf+vt';      % rendezvous impulse
+%                     delv_rendezvous = norm(dv2);
                     
-                    [t_burn,deltav_ss,exit_flag] = optimal_shooter_hop_ss_strategy5(x0,x_t,tof,x0_star_guess); % contains min time solution
+%                     if norm(dv1) * kpcpmyr2kms > 175 || norm(dv2) * kpcpmyr2kms > 175
+%                         failure_condition=1;
+%                         
+%                     else
+                        [t_burn,deltav_ss,exit_flag] = optimal_shooter_hop_ss_strategy5(x0,x_t,tof,x0_star_guess); % contains min time solution
+
+                        t_burn_ss=t_burn+t_departure_temp;
+
+                        cond1_ss= norm(deltav_ss(1,1:3)) * kpcpmyr2kms > 175;
+                        cond2_ss= norm(deltav_ss(1,4:6)) * kpcpmyr2kms > 175;
+                        cond3_ss= norm(deltav_ss(1,7:9)) * kpcpmyr2kms > 175;
+                        cond4_ss= (norm(deltav_ss(1,1:3))+norm(deltav_ss(1,4:6))+norm(deltav_ss(1,7:9)) )* kpcpmyr2kms >400;
+                        cond5_ss= exit_flag~=2 && exit_flag~=1;
+                        cond6_ss= t_burn_ss(3)>89.5;
+
+                        dv_consumption = (norm(deltav_ss(1,1:3))+norm(deltav_ss(1,4:6))+norm(deltav_ss(1,7:9)) )* kpcpmyr2kms;
                     
-                    t_burn_ss=t_burn+t_departure_temp;
-                    cond1_ss= norm(deltav_ss(1,1:3)) * kpcpmyr2kms > 175;
-                    cond2_ss= norm(deltav_ss(1,4:6)) * kpcpmyr2kms > 175;
-                    cond3_ss= norm(deltav_ss(1,7:9)) * kpcpmyr2kms > 175;
-                    cond4_ss= (norm(deltav_ss(1,1:3))+norm(deltav_ss(1,4:6))+norm(deltav_ss(1,7:9)) )* kpcpmyr2kms >400;
-                    cond5_ss= exit_flag~=2 && exit_flag~=1;
-                    
-                    dv_consumption = (norm(deltav_ss(1,1:3))+norm(deltav_ss(1,4:6))+norm(deltav_ss(1,7:9)) )* kpcpmyr2kms;
-                    
-                    if  cond1_ss | cond2_ss | cond3_ss | cond4_ss |  cond5_ss
+                    if  cond1_ss | cond2_ss | cond3_ss | cond4_ss |  cond5_ss | cond6_ss
                         failure_condition=1;
                     else
                         failure_condition=0;
                     end
+                    
+%                     end
                     
                 else
                     disp('Wrong settler ship solver option')
@@ -477,13 +497,13 @@ for i = 1:9
             hold on
             plot3(x_t(1),x_t(2),x_t(3),'*')
             %         text(x_t(1),x_t(2),x_t(3),num2str(idx_ij))
-            axis equal
+            hold on; plot3(0,0,0,'+')
+            axis square
             xlim([-32 32])
             ylim([-32 32])
         end
     end
-    %     pause(5)
+    pause(10)
 end
 savefig(figname);
-hold on; plot3(0,0,0,'+')
 

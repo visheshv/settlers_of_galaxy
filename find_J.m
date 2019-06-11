@@ -3,10 +3,9 @@ idx = find_J(idx,star_ID)
 % inputs
 % star_ID: existing settled star database
 % idx: the indices of the settled stars
-% 
 
 star_id_settled = star_ID(star_ID~=0); % IDs for settled stars
-star_id_settled = [star_id_settled idx+];
+star_id_settled = [star_id_settled idx];
 
 R_vec = data(:,2);       % kpc (kiloparsecs)
 theta_f_vec = data(:,6); % final polar angle (deg)

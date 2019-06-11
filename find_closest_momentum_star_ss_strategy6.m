@@ -1,4 +1,4 @@
-function idx = find_closest_momentum_star_ss_strategy5(star_positions_target,star_velocities_target,x0,n,star_ID,x,y,z,i_vec,min_sep,r_max,r_min,min_search_angle)
+function idx = find_closest_momentum_star_ss_strategy6(x0,n,star_ID,x,y,z,i_vec,min_sep,r_max,r_min,min_search_angle,star_grid_id,t_arrival_temp)
 
 % Inputs
 % star_positions_target: star positions at arrival (kpc)for star ID 1 to 1e5
@@ -27,19 +27,23 @@ rnorm=norm(r0);dvdr=-(myr*(8*k8*rnorm^7 + 7*k7*rnorm^6 + 6*k6*rnorm^5 + 5*k5*rno
 
 star_id_settled = star_ID(star_ID~=0); % IDs for settled stars
 
+i_arrival_temp=t_arrival_temp/0.5 +1;
+star_positions_target=[x(1:end,i_arrival_temp),y(1:end,i_arrival_temp),z(1:end,i_arrival_temp)]; % Except sun, all position values for stars at t=tof
+
 if ~isempty(star_id_settled)
-    settled_star_pos_temp=[x(star_id_settled+1,181) y(star_id_settled+1,181) z(star_id_settled+1,181)];       % temporary matrix to store settled star positions at tf =90 myr
-    star_positions_target(star_id_settled,1:3)= repmat([inf inf inf],length(star_id_settled),1);
+        star_positions_target(star_id_settled+1,1:3)= repmat([inf inf inf],length(star_id_settled),1);
 end
 
-% Identify 10,000 closest stars
-idx = knnsearch(star_positions_target,r0','K',10000);
+% Remove the stars of the non-star database ids 
+all_id=1:1e5; 
+rem_id=setdiff(all_id,star_grid_id);
+star_positions_target(rem_id+1,1:3)= repmat([inf inf inf],length(rem_id),1);
 
+% Identify 10,000 closest stars
+idx = knnsearch(star_positions_target,r0','K',5000);
 rel_pos= star_positions_target(idx,:)-repmat(r0',length(idx),1);
 normvec= vecnorm((rel_pos)')';
 rel_pos= rel_pos./normvec;
-rel_vel= star_velocities_target(idx,:)-repmat(v0',length(idx),1);
-normvel= vecnorm((rel_vel)')';
 
 v_n= repmat(v0'/norm(v0),length(idx),1);
 
@@ -55,20 +59,8 @@ if norm(r0) >=16  % i.e. r is between 15 and 20 kpc
     
 end
 
-if ~isempty(star_id_settled)
-    for j=1:length(idx)
-        r_j = [x(idx(j)+1,181),y(idx(j)+1,181),z(idx(j)+1,181)];
-        idx_temp= knnsearch(settled_star_pos_temp,r_j,'K',1);
-        dist_min=norm(settled_star_pos_temp(idx_temp,:)-r_j);
-        if dist_min < min_sep
-            angles(j) = 179;
-        end
-    end
-end
 
-v_max=0.5;    % velocity threshold
-
-inc_thresh=3; % inclination range acceptable (deg)
+inc_thresh=10; % inclination range acceptable (deg)
 
 % plane normal
 inc=180-i_vec(idx);
@@ -76,7 +68,6 @@ inc=180-i_vec(idx);
 angles(normvec<r_min)=179;
 angles(vecnorm(star_positions_target(idx,:)')'<5)=179;
 angles(normvec>r_max)=179;
-angles(normvel>v_max)=179;
 angles(inc>inc_thresh)=179;
 
 angles_temp =  angles .* sign_data;
@@ -93,7 +84,7 @@ angles_temp =  angles .* sign_data;
 % Choose first star to be close to -5 deg from the velocity vector
 [~,ind_min]=min(abs(angles_temp-min_search_angle));
 idx1=idx(ind_min);
-idx=idx1;
+idx=idx1-1;
 
 % [tempA,i_angles]=sort(angles_temp);
 % 

@@ -1,5 +1,5 @@
 function [t_burn,deltav,exit_flag] = optimal_shooter_hop_ss_strategy5(star_x0,xt,tof,xi)
-tic
+
 % Input 
 % star_x0 = initial state of the star as a colmn vector
 % xt = final state of the target star as a column vector
@@ -50,6 +50,6 @@ arr = ((-states2(end,4:6)' + xt(4:6)));
 
 t_burn = [0,X_multiple_hop(13),X_multiple_hop(14)+X_multiple_hop(13)];
 deltav = [dep',inter',arr'];  % dv1, dv2, dv3
-toc
+
 end
 
