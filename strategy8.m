@@ -296,7 +296,7 @@ while(gen<max_gen)
             
             indx_current_star = find(settlement_tree_ss(:,2) == ID_jk);     % Find the starID in the arrival ID column of the SS tree
             
-            if ss_solver_option_loop == 1
+            if settlement_tree_ss(indx_current_star(1),3) == 2
                 t_departure=settlement_tree_ss(indx_current_star(1),5)+2;       % 2 yr for settling
             else
                 t_departure=settlement_tree_ss(indx_current_star(1),6)+2;       % 2 yr for settling
