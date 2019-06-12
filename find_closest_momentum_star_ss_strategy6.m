@@ -38,9 +38,20 @@ end
 all_id=1:1e5; 
 rem_id=setdiff(all_id,star_grid_id);
 star_positions_target(rem_id+1,1:3)= repmat([inf inf inf],length(rem_id),1);
+star_positions_target(1,1:3)= repmat([inf inf inf],1,1);
 
+init_num=500;
+while_count=0;
+min_search_angle_temp= min_search_angle;
+
+while_count_max=25;
+
+while(while_count<while_count_max)
+
+while_count=while_count+1;
+    
 % Identify 10,000 closest stars
-idx = knnsearch(star_positions_target,r0','K',5000);
+idx = knnsearch(star_positions_target,r0','K',init_num);
 rel_pos= star_positions_target(idx,:)-repmat(r0',length(idx),1);
 normvec= vecnorm((rel_pos)')';
 rel_pos= rel_pos./normvec;
@@ -50,96 +61,57 @@ v_n= repmat(v0'/norm(v0),length(idx),1);
 angles = acosd(dot(rel_pos,v_n,2));
 sign_data=angle_sign(rel_pos,v_n,repmat(r0',length(idx),1));
 
-% CHECK!
-if norm(r0) >=16  % i.e. r is between 15 and 20 kpc
-    
-    r_min = 1;
-    r_max = r_min + 3;
-    min_sep=3;
-    
-end
-
-
 inc_thresh=10; % inclination range acceptable (deg)
 
 % plane normal
 inc=180-i_vec(idx);
-    
+
+if norm(r0)>17
+    angles(vecnorm(star_positions_target(idx,:)')'<17)=179;    
+end
+
+if norm(r0)>5.5
+    angles(vecnorm(star_positions_target(idx,:)')'<5)=179;
+end
+
+%%
+
+
 angles(normvec<r_min)=179;
-angles(vecnorm(star_positions_target(idx,:)')'<5)=179;
 angles(normvec>r_max)=179;
 angles(inc>inc_thresh)=179;
 
 angles_temp =  angles .* sign_data;
 
-% find the angle such that min separation between target stars is as
-% per the grid size at the radius band
-
-% separation_angle= atand((norm(r0) * pi/16)/ r_min) ; % grid size %% could be also written as  (norm(r0) * pi/16)/ r_min for better calculation
-% separation_angle= (180/pi)*((norm(r0) * pi/100)/ r_min) ; % grid size %% could be also written as  (norm(r0) * pi/16)/ r_min for better calculation
-
-% theta_dvdr=atand(dvdr);
-% theta_star=max([theta_dvdr,separation_angle]);
-
 % Choose first star to be close to -5 deg from the velocity vector
-[~,ind_min]=min(abs(angles_temp-min_search_angle));
-idx1=idx(ind_min);
-idx=idx1-1;
+[~,ind_min]=min(abs(angles_temp-min_search_angle_temp));
 
-% [tempA,i_angles]=sort(angles_temp);
-% 
-% % Selection strategy: Find one angle as close to radial outwards direction
-% % and find the other two angles such that they maximize the separation
-% % between the three angles and ensure they are atleast separated by a
-% % threshold angle. If not, skip 3 star selection and go for either 1/2
-%     
-% if separation_angle <= 45
-%     
-%     i_1= find((tempA> -45) & (tempA< 0));  
-%     
-%     if length(i_1)>=2
-%         if abs(tempA(i_1(1))-tempA(i_1(end)))> 0.8 * separation_angle
-%             idx2=idx(i_angles(i_1(1)));
-%             idx3=idx(i_angles(i_1(end)));
-%             idx=[idx1;idx2;idx3];
-%         else
-%             idx3=idx(i_angles(i_1(end)));
-%             idx=[idx1;idx3];
-%         end
-%         
-%     elseif length(i_1)==1
-%         
-%         idx2=idx(i_angles(i_1(end)));
-%         idx=[idx1;idx2];
-%         
-%     else
-%         idx=idx1;
-%     end
-%     
-% elseif separation_angle > 45 && separation_angle <=90
-%     
-%     i_1= find((tempA> -90-separation_angle) & (tempA< -90+separation_angle));  
-%     
-%     if length(i_1)>=2
-%         if abs(tempA(i_1(1))-tempA(i_1(end)))> 0.8 * separation_angle  && idx(i_angles(i_1(1)))~=idx1
-%             idx2=idx(i_angles(i_1(1)));
-%             idx3=idx(i_angles(i_1(end)));
-%             idx=[idx1;idx2;idx3];
-%         else
-%             idx3=idx(i_angles(i_1(end)));
-%             idx=[idx1;idx3];
-%         end        
-%     elseif length(i_1)==1 && idx(i_angles(i_1(end)))~=idx1        
-%         idx2=idx(i_angles(i_1(end)));
-%         idx=[idx1;idx2];        
-%     else
-%         idx=idx1;
-%     end        
-% else
-%     
-% disp(['Impossible separation angle for SS(deg):' num2str(separation_angle)])
-%     
-% end
+if isempty(ind_min)
+    
+    if mod(while_count,12)==1
+        
+    r_min=r_min+1;
+    r_max = r_max+3;
+    init_num= init_num+1000;
+    idx=[];
+    min_search_angle_temp=min_search_angle;
+    
+    else
+       
+        min_search_angle_temp=min_search_angle - 15 * floor(while_count*0.5) * (-1)^while_count;
+        if (while_count==while_count_max)
+           idx=[];
+        end
+        
+    end
+    
+    
+else
+    
+    idx1=idx(ind_min);
+    idx=idx1-1;
+    break
+end
 
 end
 
