@@ -19,7 +19,13 @@ star_target_ids=setdiff(star_grid_id,star_id_settled);  % remove settled stars f
 
 % Identify the current position grid center radius
 r_upper=min(norm(r0)-mod(norm(r0),1)+3,32);
-r_lower=max(norm(r0)-mod(norm(r0),1)-2,5);
+
+% select below 5 only if you are close to five
+% if norm(r0) >5 && norm(r0) <5.5
+%     r_lower=max(norm(r0)-mod(norm(r0),1)-2,2);  % Permission to look for targets below granted
+% else
+    r_lower=max(norm(r0)-mod(norm(r0),1)-2,5);
+% end
 
 i_arrival_temp=t_arrival_temp/0.5 +1;
 star_positions_target=[x(1:end,i_arrival_temp),y(1:end,i_arrival_temp),z(1:end,i_arrival_temp)]; % Except sun, all position values for stars at t=tof

@@ -16,7 +16,7 @@ function [t_burn,deltav,exit_flag] = optimal_shooter_hop_ss_strategy5(star_x0,xt
 % xt = [0.325086955798508; -9.28756499339524; 1.99155694398751; -0.243539204775551; 0.00664123591508843; 0.0707247308801087];
 
 A = []; B = []; Aeq = []; Beq = []; 
-options = optimoptions('fmincon','algorithm','sqp','Display','None','MaxFunctionEvaluations',100000,'MaxIterations',100);
+options = optimoptions('fmincon','algorithm','sqp','Display','None','MaxFunctionEvaluations',100000,'MaxIterations',60);
 
 %% Now the transfer has to be accomplished with 3 deltaVs and total constant time, broken into 3 steps
 

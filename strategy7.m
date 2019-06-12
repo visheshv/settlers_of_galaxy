@@ -1,6 +1,4 @@
-% Strategy 7: Important points
-% SOLVER OPTION 1: Implementation only with the shooter method
-
+% Strategy 6: Important points
 
 % Implement a simple strategy to populate three stars with three motherships
 % Implement star selection strategy (1,2,3) with 3-impulse shooter for 3.5 kpc stars. Implement the shooter. FS1 used here. Must make sure that radial ships targets are atleast
@@ -50,16 +48,16 @@ star_ID   = zeros(100,1e5); % Assuming 100 generations of settlements amd 100000
 J_merit =0; delV_max = 0; delV_used = 0;
 
 %% Enter test input vector
-vv = [0.00000	10.00000	5.00000	5.00000	120.00000	100.00000	50.00000	-90.00000	-30.00000	-30.00000	5.00000	10.00000	5.00000	5.00000	100.00000	75.00000	50.00000	0.00000	30.00000	40.00000	5.00000	10.00000	5.00000	5.00000	150.00000	80.00000	50.00000	50.00000	90.00000	120.00000	27 27.1 -90 0	27 27.1 0 90	1.00000	3.00000	1.00000	-5.00000];
+vv = [0.00000	10.00000	5.00000	15.00000	100.00000	100.00000	20.00000	20.00000	-30.00000	90.00000	5.00000	10.00000	10.00000	5.00000	100.00000	50.00000	30.00000	0.00000	90.00000	80.00000	5.00000	10.00000	5.00000	5.00000	150.00000	80.00000	50.00000	50.00000	90.00000	120.00000	27 27.1 -90 0	27 27.1 0 90	1.00000	3.00000	1.00000	-5.00000];
 
 itr = '1';
 
 
 %% Solution format text file
-fname = 'strategy6';
+fname = 'strategy7';
 fnameext = strcat(fname,'.txt');
 figname = strcat(fname, '.fig');
-fileID = fopen(fnameext,'w'); fprintf(fileID,'%s','strategy5');
+fileID = fopen(fnameext,'w'); fprintf(fileID,'%s','strategy7');
 
 settlement_tree_sp=[];
 settlement_tree_ms=[];
@@ -257,7 +255,7 @@ end
 % For departure time of 8 (6+2) myr, identify the three closest stars
 % positionally and make a Gen 1 set of settler ships
 
-ss_solver_option=2; % Solver options: 1 for two impulse and 2 for three impulse strategy
+ss_solver_option=1; % Solver options: 1 for two impulse and 2 for three impulse strategy
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
 max_gen=20;
@@ -327,9 +325,9 @@ while(gen<max_gen)
         
         for l =1:3  % Find transfers to selected 1/2/3 stars with respect to jth settled star of kth generation
             
-            tof_fit=polyval(poly_n,norm(r0_jk));% guess tof in myr as a multiple of 0.5 myr
-            tof_fit=tof_fit-mod(tof_fit,0.5);
-%             tof_fit=2.5;
+%             tof_fit=polyval(poly_n,norm(r0_jk));% guess tof in myr as a multiple of 0.5 myr
+%             tof_fit=tof_fit-mod(tof_fit,0.5);
+            tof_fit=2.5;
             t_arrival=t_departure+tof_fit;                      % tof fit
             t_arrival_temp=t_arrival;                           % Initial arrival time
             t_departure_temp=t_departure;
@@ -486,13 +484,11 @@ end
 
 
 % plot star positions versus generation
-for i = 1:9
+for i = 1:13
     for j=1:length(star_ID(star_ID~=0))
         i_f=90/0.5+1;
         if star_ID(i,j)==0
         else
-            %         temp = find(star_ID(i,j) == star_data(:,1)); % find the row number for the ID in the star database
-            %         idx_ij =  star_data(temp,1);
             idx_ij = star_ID(i,j)+1;
             x_t = [x(idx_ij,i_f) y(idx_ij,i_f) z(idx_ij,i_f) vx(idx_ij,i_f) vy(idx_ij,i_f) vz(idx_ij,i_f)]'; % Target states
             figure(1)
@@ -505,7 +501,7 @@ for i = 1:9
             ylim([-32 32])
         end
     end
-    pause(10)
+    pause(5)
 end
 savefig(figname);
 
