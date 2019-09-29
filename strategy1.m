@@ -118,6 +118,7 @@ while constraints_met==0
         if t_arrival>89.5
             break
         end
+        
     else
         
         % Successful transfer
@@ -179,7 +180,9 @@ while constraints_met==0
 
 end
 
-
+%% add lines for extra motherships1,2 , NOTE: not adding the mothership matrix now
+settlement_tree_sp =[settlement_tree_sp; -2 1 53794 14.5 4.12468957441322,166.542907556157,102.042781906309];
+star_ID(1,4)=53794;
 
 toc;
 toc-tic
@@ -190,11 +193,12 @@ fprintf(fileID,[repmat('%0.0f,',1,4) repmat('%0.12f,',1,12)],settlement_tree_ms)
 fprintf(fileID,['\n' repmat('%0.0f,',1, 3) repmat('%0.12f,',1,4)],settlement_tree_sp');
 
 %% fast ship line 
-star_ID(1,10:11) = [696 19131]; % Solutions available from J_store
+star_ID(1,10:11) = [11916 19131]; % Solutions available from J_store
 
 %!! RUN the fast_ship_transfer file for FS -11 
-settlement_tree_fs(1:2,:)=[-11,696,0,25,kpcpmyr2kms*[-0.607263816523397,-0.365907897190692,-0.0446800262498599,0.408446251323942,0.635341048639990,-0.00469600342441436];
+settlement_tree_fs(1:2,:)=[-11,11916,0,24.5,45.9127551644999,803.175220136587,-14.3951226842251,319.705806225252,-614.358394676057,31.3572788494068;
                            -12,19131,0,6.5,-1316.70466616146,362.474264571612,9.85548837500831,1382.67201066288,-333.627000067822,-24.4211899177846];  % row 1 and row3 of initial solution
+% FS1 to theta =-90 deg : -11,696,0,25,kpcpmyr2kms*[-0.607263816523397,-0.365907897190692,-0.0446800262498599,0.408446251323942,0.635341048639990,-0.00469600342441436
 fprintf(fileID,['\n' repmat('%0.0f,',1,2) repmat('%0.12f,',1,8)],settlement_tree_fs');
 
 
@@ -206,7 +210,7 @@ tic
 gen = 1; % 1st generation of settler ships to be seen
 settlement_tree_ss=[];
 
-while(gen<20)
+while(gen<22)
 
 % remove the stars that are already occupied for generating the search
 % space
@@ -366,7 +370,7 @@ end
 close all
 % plot star positions versus generation
 for i = 1:9
-    for j=1:3^(i)
+    for j=1:length(star_ID(star_ID~=0))
         i_f=90/0.5+1;
         if star_ID(i,j)==0
         else
@@ -384,4 +388,4 @@ for i = 1:9
     end
 %     pause(5)    
 end
-
+ hold on; plot3(0,0,0,'+')

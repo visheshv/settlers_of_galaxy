@@ -7,6 +7,15 @@ v0= x0(4:6);
 gen_jump=0;% kpc
 min_sep=1;% minimum separation allowed for the target stars from any of the settled stars
 
+% constants
+kpc2km = 30856775814671900; myr = 1e6*31557600; kms2kpcpmyr = myr/kpc2km; kpcpmyr2kms = kpc2km / myr;
+k = [0.00287729 0.0023821 -0.0010625 0.000198502 -1.88428e-05 9.70521e-07 -2.70559e-08 3.7516e-10 -1.94316e-12];
+k0 = k(1);k1=k(2);k2=k(3);k3=k(4);k4=k(5);k5=k(6);k6=k(7);k7=k(8);k8=k(9);
+rnorm=norm(r0);
+
+% calculate dv/dr
+dvdr=-(myr*(8*k8*rnorm^7 + 7*k7*rnorm^6 + 6*k6*rnorm^5 + 5*k5*rnorm^4 + 4*k4*rnorm^3 + 3*k3*rnorm^2 + 2*k2*rnorm + k1))/(kpc2km*(k8*rnorm^8 + k7*rnorm^7 + k6*rnorm^6 + k5*rnorm^5 + k4*rnorm^4 + k3*rnorm^3 + k2*rnorm^2 + k1*rnorm + k0)^2);
+
 % remove stars under or outside the sphere of radius norm(r0)
 % condition=vecnorm((star_positions_target)')' >  norm(r0)+gen_jump;
 % star_positions_target(condition,:)= repmat([inf inf inf], sum(condition),1 );
@@ -52,8 +61,8 @@ end
 % r_min=hist.BinEdges(i_r_min);
 % stats for short tof transfers
 
-r_max=4;
-r_min=1.2;
+r_max=3;
+r_min=1;
 v_max=0.3;
 
 inc_thresh=3; % inclination range
@@ -81,40 +90,41 @@ if n==1
 
 else
 
-%     [tempA,i_angles]=sort(angles);idx=idx(i_angles); idx=idx(1:n);
+    angles_temp =  angles .* sign_data;       
     
-    angles_temp =  angles .* sign_data;
-       
-    [~,ind_min]=min(abs(angles_temp));
+    
+    % find the angle such that min separation between target stars is as
+    % per the grid size at the radius band
+    theta_dvdr=atand(dvdr);
+    separation_angle= atand((norm(r0) * pi/16)/ r_min) ; % grid size
+    theta_star=max([theta_dvdr,separation_angle]);
+    
+    [~,ind_min]=min(abs(angles_temp+(90+separation_angle*0.5)));
     idx1=idx(ind_min);
     
     [tempA,i_angles]=sort(angles_temp);
-    i_1= find( (tempA> (1.1 * (180/pi))) & (tempA< (179 )));
+    i_1= find( (tempA> (-(90-separation_angle*0.5))) & (tempA< (-(90-separation_angle*1.5))));  % if separation is 50 deg, the angles is between -65 deg to -40 deg 
     
-    if isempty(i_1)
-        cond1=0;
-    else
-        cond1=1;
-        idx2=idx(i_angles(i_1(1)));
-    end
-    
-    i_2= find( (tempA< (-1.1 * (180/pi))) & (tempA> (-179)));
-    
-    if isempty(i_2)
-        cond2=0;
-    else
-        cond2=1;
-        idx3=idx(i_angles(i_2(end)));
-    end
-    
-    if cond1==0 && cond2==1
-        idx=[idx1;idx3];
-    elseif cond1==1 && cond2==0
-        idx=[idx1;idx2];
-    elseif cond1==0 && cond2==0
-        idx=idx1;
-    elseif cond1==1 && cond2==1
+    if length(i_1)>=2
+        
+        if idx(i_angles(i_1(1)))~=idx1
+            idx2=idx(i_angles(i_1(1)));
+        else
+            idx2=idx(i_angles(i_1(2)));
+        end
+        
+        idx3=idx(i_angles(i_1(end)));
         idx=[idx1;idx2;idx3];
+        
+    elseif length(i_1)==1
+        
+        idx2=idx(i_angles(i_1(end)));
+        idx=[idx1;idx2];
+    
+    else
+        
+        idx=idx1;
+        
     end
     
     %1.1 radian gives segment length greater than 1 kpc for r_min =1 kpc

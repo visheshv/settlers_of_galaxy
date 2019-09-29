@@ -16,7 +16,7 @@ star_target_ids=setdiff(star_grid_id,star_id_settled);
 % Identify 'n' closest stars
 dv_store=zeros(length(star_target_ids),2);
 
-parfor i = 1:length(star_target_ids)
+parfor i = 1:length(star_target_ids) 
     
     rt=[x(star_target_ids(i)+1,i_arrival),y(star_target_ids(i)+1,i_arrival),z(star_target_ids(i)+1,i_arrival)];
     vt=[vx(star_target_ids(i)+1,i_arrival),vy(star_target_ids(i)+1,i_arrival),vz(star_target_ids(i)+1,i_arrival)];

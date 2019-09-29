@@ -1,4 +1,4 @@
-function idx_selection = find_closest_momentum_star_mothership_strategy5(x0,n,star_ID,x,y,z, mothership_id, mothership_controls, num_impulses,kms2kpcpmyr,R_vec,phi_vec,omega_vec,i_vec,n_vec,v_vec,t_departure)
+function idx_selection = find_closest_momentum_star_mothership_strategy9(x0,n,star_ID,x,y,z, mothership_id, mothership_controls, num_impulses,kms2kpcpmyr,R_vec,phi_vec,omega_vec,i_vec,n_vec,v_vec,t_departure)
 
 % Inputs
 % star_positions_target: star positions at arrival (kpc)for star ID 1 to 1e5
@@ -34,7 +34,8 @@ dv_allowed = mothership_controls(-mothership_id,6+num_impulses)*kms2kpcpmyr * 0.
 max_angle_dv = mothership_controls(-mothership_id,9+num_impulses);
 time_allowed = mothership_controls(-mothership_id,3+num_impulses);
 dv_vec= dv_allowed * [cosd(max_angle_dv) sind(max_angle_dv) 0; -sind(max_angle_dv) cosd(max_angle_dv) 0; 0 0 1]*v0/norm(v0);  
-theta_max= sign(max_angle_dv) * acosd(dot((dv_vec+v0)/norm(dv_vec+v0),v0/norm(v0)));% allowed maximum angle to search targets with respect to velocity
+
+% theta_max= sign(max_angle_dv) * acosd(dot((dv_vec+v0)/norm(dv_vec+v0),v0/norm(v0)));% allowed maximum angle to search targets with respect to velocity
  
 % check for closest stars
 x0=[r0;dv_vec+v0];
@@ -45,7 +46,7 @@ ic = horzcat(x0',stm0); opts = odeset('AbsTol',1e-5);
 
 t_hist=t_hist+t_departure; % Add initial time 
 
-[store_close_stars]=multi_intercept_check(t_hist,r_hist,v_hist,R_vec,phi_vec,omega_vec,i_vec,v_vec,n_vec);
+[store_close_stars]=multi_intercept_check1(t_hist,r_hist,v_hist,R_vec,phi_vec,omega_vec,i_vec,v_vec,n_vec);
 idx=sort(unique(store_close_stars(:,1)));     
 
 

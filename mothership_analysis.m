@@ -1,6 +1,6 @@
 % Find out possible solutions for star interceptions after the mothership
 % has exhausted its last impulse
-
+load star_snapshots.mat
 kpc2km = 30856775814671900;
 myr = 1e6*31557600;
 kms2kpcpmyr = myr/kpc2km;
@@ -8,15 +8,15 @@ dtr = pi/180;
 
 % spiral config: fpa 80,80,120, delv: 200,200,100, t: 20,10,10
 
-fpa1=-90;
-fpa2=-90;
-fpa3=-90;
+fpa1=80;
+fpa2=80;
+fpa3=120;
 
 r_mat1=[cosd(fpa1) sind(fpa1) 0; -sind(fpa1) cosd(fpa1) 0; 0 0 1];
 r_mat2=[cosd(fpa2) sind(fpa2) 0; -sind(fpa2) cosd(fpa2) 0; 0 0 1];
 r_mat3=[cosd(fpa3) sind(fpa3) 0; -sind(fpa3) cosd(fpa3) 0; 0 0 1];
 
-del_v1=200*kms2kpcpmyr;
+del_v1=200 *kms2kpcpmyr;
 del_v2=200 *kms2kpcpmyr;
 del_v3=100 *kms2kpcpmyr;
 
@@ -24,7 +24,7 @@ t1=20;
 t2=10;
 t3=10;
 
-i_query=21;
+i_query=1;
 
 r0=[x(1,i_query) y(1,i_query) z(1,i_query)]';
 v0=[vx(1,i_query) vy(1,i_query) vz(1,i_query)]';
@@ -52,9 +52,14 @@ ic = horzcat(x0',stm0);
 [t,states3]=ode45(@dynamics,tspan,ic);
 
 r_hist=[states(:,1:3);states1(:,1:3);states2(:,1:3);states3(:,1:3)];
+v_hist=[states(:,4:6);states1(:,4:6);states2(:,4:6);states3(:,4:6)];
+
+figure(1)
 plot3(r_hist(:,1),r_hist(:,2),r_hist(:,3))
 xlim([-32 32])
 ylim([-32 32])
 
-
-
+vel=vecnorm(v_hist')';
+figure(2)
+plot(vel)
+ylabel('vel (kpc/myr)')
